@@ -41,6 +41,9 @@ const VertexBComponent: React.FC<{ id: string }> = ({ id }) => {
             height: "100%",
             display: "grid",
             gridTemplateRows: "23px 1fr",
+
+
+            
             padding: "2px",
             boxSizing: "border-box",
             overflow: "hidden",
