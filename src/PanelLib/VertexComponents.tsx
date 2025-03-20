@@ -35,73 +35,25 @@ const VertexBComponent: React.FC<{ id: string }> = ({ id }) => {
         return <div>Vertex not found</div>;
     }
 
+    const splitRow = () => {
+        const newTree = split(tree, id, "row");
+        setTree(newTree);
+    }
+    const splitColumn = () => {
+        const newTree = split(tree, id, "column");
+        setTree(newTree);
+    }
+    const closePanel = () => {
+        const newTree = close(tree, id);
+        setTree(newTree);
+    }
+
     return (
-        <div style={{
-            width: "100%",
-            height: "100%",
-            display: "grid",
-            gridTemplateRows: "23px 1fr",
-
-
-            
-            padding: "2px",
-            boxSizing: "border-box",
-            overflow: "hidden",
-        }}>
-            <div style={{
-                backgroundColor: "rgb(230, 230, 230)",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                borderTopLeftRadius: "5px",
-                borderTopRightRadius: "5px",
-                padding: "5px",
-            }}>
-                <div></div>
-                <div style={{
-                    display: "flex",
-                    gap: "2px",
-                    flexDirection: "row",
-                    justifyContent: "flex-end",
-                    alignItems: "center",
-                }}>
-                    <button 
-                        style={{
-                            width: "18px",
-                            height: "18px",
-                            fontSize: "8px",
-                        }}
-                    onClick={() => {
-                        const newTree = split(tree, id, "row");
-                        setTree(newTree);
-                    }}>|</button>
-                    <button 
-                        style={{
-                            width: "18px",
-                            height: "18px",
-                            fontSize: "8px",
-                        }}
-                    onClick={() => {
-                        const newTree = split(tree, id, "column");
-                        setTree(newTree);
-                    }}>—</button>
-                    <button 
-                        style={{
-                            width: "18px",
-                            height: "18px",
-                            fontSize: "8px",
-                        }}
-                    onClick={() => {
-                        const newTree = close(tree, id);
-                        setTree(newTree);
-                    }}>X</button>
-                </div>
-            </div>
-            <div>            
-                <ContentComponent id={id} />
-            </div>
-
-        </div>
+        <ContentComponent id={id} 
+            splitRow={splitRow}
+            splitColumn={splitColumn}
+            closePanel={closePanel}
+        />
     );
 }
 
@@ -128,10 +80,14 @@ const VertexCComponent: React.FC<{ id: string }> = ({ id }) => {
     const renderChild = (childId: string) => {
         const v = tree[childId];
         if (v.type === "b") {
-            return <VertexBComponent key={childId} id={childId} />;
+            return <div style={{pointerEvents: dragging ? "none" : "auto"}}>
+                <VertexBComponent key={childId} id={childId} />
+            </div>;
         }
         if (v.type === "c") {
-            return <VertexCComponent key={childId} id={childId} />;
+            return <div style={{pointerEvents: dragging ? "none" : "auto"}}>
+                <VertexCComponent key={childId} id={childId} />
+            </div>;
         }
         return null;
     }
@@ -147,7 +103,6 @@ const VertexCComponent: React.FC<{ id: string }> = ({ id }) => {
             width: "100%",
             height: "100%",
             overflow: "hidden",
-            userSelect: dragging ? "none" : "auto",
             cursor: dragging ? "grabbing" : "default",
         }}
             onMouseMove={(event) => {

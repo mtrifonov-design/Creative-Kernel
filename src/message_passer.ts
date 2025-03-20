@@ -82,4 +82,4 @@ function sendMessageFromCore(target: string, content: string) {
     window.dispatchEvent(e);
 }
 
-export { sendMessageFromCore, installIframe };
+export { sendMessageFromCore, installIframe, dispose };
