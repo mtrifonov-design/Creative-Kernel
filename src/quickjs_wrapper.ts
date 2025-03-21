@@ -30,9 +30,9 @@ async function install(wasmId: string, wasmUrl: string) {
         const target = nativeArgs[0];
         const content = nativeArgs[1];
 
-        const event = new CustomEvent("wasm-message", {
+        const event = new CustomEvent("mog-message", {
             detail: {
-                source: `JS::${wasmId}::${wasmUrl}`,
+                source: wasmId,
                 target,
                 content
             },

@@ -24,7 +24,7 @@ async function install(wasmId : string, wasmUrl : string) {
                 const json = JSON.parse(message);
                 const { target, content } = json;
 
-                const event = new CustomEvent("wasm-message", {
+                const event = new CustomEvent("mog-message", {
                     detail: {
                         source: `RAW::${wasmId}::${wasmUrl}`,
                         target,
@@ -78,7 +78,7 @@ function dispose(wasmId : string) {
 };
 
 // function onMessage(callback: Function) {
-//     window.addEventListener("wasm-message", (event : Event) => {
+//     window.addEventListener("mog-message", (event : Event) => {
 //         // @ts-ignore
 //         const { source, target, content } = event.detail;
 //         callback(source, target, content );

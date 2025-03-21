@@ -2,8 +2,23 @@ const instances : {
     [id: string]: HTMLIFrameElement
 } = {};
 
+const pw_id : {
+    [pw: string]: string
+} = {};
+
+function generatePw() {
+    const pw = Math.random().toString(36).substring(2, 15);
+    return pw;
+};
+
 function install(iframe: HTMLIFrameElement, id: string) {
+    const pw = generatePw();
+    pw_id[pw] = id;
     instances[id] = iframe;
+    iframe.onload = () => {
+        sendMessage(id, { MOG_INSTALL: true, pw: pw });
+    }
+
 }
 
 function dispose(id: string) {
@@ -14,11 +29,11 @@ function dispose(id: string) {
     }
 }
 
-function sendMessage(id: string, message: string) {
+function sendMessage(id: string, message: any) {
     const iframe = instances[id];
 
     const wrapped = JSON.stringify({
-        type: 'wasm-message',
+        type: 'mog-message',
         content: message,
     });
     //post message
@@ -28,11 +43,14 @@ function sendMessage(id: string, message: string) {
 }
 
 window.addEventListener("message", (event: MessageEvent) => {
-    const message = event.data;
-    if (message.type === 'wasm-message') {
-        const { target, content, source } = JSON.parse(message.content);
+    const message = JSON.parse(event.data);
 
-        const e = new CustomEvent("wasm-message", {
+    
+    if (message.type === 'mog-message') {
+        const { target, content, pw } = message.content;
+        // console.log(`MESSAGE ${pw_id[pw]} --> ${target}:\n\n${content}`,pw);
+        const source = pw_id[pw];
+        const e = new CustomEvent("mog-message", {
             detail: {
                 source,
                 target,
