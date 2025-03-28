@@ -96,7 +96,7 @@ const App: React.FC = () => {
 //         type: 'branch',
 //         direction: 'row'
 //     });
-//     //console.log("RENDER", tree)
+//     ////console.log("RENDER", tree)
 
 //     return <VertexC self={tree} tree={tree} setTree={setTree}  />
 // }

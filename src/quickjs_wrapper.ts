@@ -14,7 +14,7 @@ const instances : {
 } = {};
 
 async function install(wasmId: string, wasmUrl: string) {
-    console.log()
+    //console.log()
     // const module = await newQuickJSWASMModule(RELEASE_SYNC);
     const module = await getQuickJS();
     const vm = module.newContext();
@@ -29,6 +29,7 @@ async function install(wasmId: string, wasmUrl: string) {
         const nativeArgs = args.map(vm.dump);
         const target = nativeArgs[0];
         const content = nativeArgs[1];
+        //console.log(content);
 
         const event = new CustomEvent("mog-message", {
             detail: {
@@ -44,7 +45,8 @@ async function install(wasmId: string, wasmUrl: string) {
     vm.setProp(vm.global,"sendMessage", sendMessageHandle);
     sendMessageHandle.dispose();
 
-    vm.evalCode(jsCode);
+    const res = vm.evalCode(jsCode);
+    //console.log(vm.unwrapResult(res));
 }
 
 function dispose(wasmId: string) {
@@ -59,7 +61,9 @@ function sendMessage(wasmId: string, message: string) {
     const instance = instances[wasmId];
     if (instance) {
         const vm = instance.vm;
-        vm.evalCode(`onMessage('${message}')`);
+        //console.log(`Sending message to ${wasmId}:`, message);
+        //console.log(`Sending message to ${wasmId}:`, `onMessage('${encodeURI(message)}')`);
+        vm.evalCode(`onMessage('${encodeURI(message)}')`);
     }
 }
 

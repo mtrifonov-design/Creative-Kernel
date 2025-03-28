@@ -45,7 +45,7 @@ const ContentComponent: React.FC<{
 
     useEffect(() => {
         const iframe = getIframe(id,address);
-        console.log(id,iframe);
+        //console.log(id,iframe);
         if (!iframe) {
             return;
         }

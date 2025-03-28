@@ -19,8 +19,8 @@ async function install(wasmId : string, wasmUrl : string) {
                 const message = new TextDecoder("utf-8").decode(bytes);
 
                 // 4. Log it (or do anything else you want).
-                // console.log("Received from Rust:", message);
-                // console.log("Received from Rust:", message);
+                // //console.log("Received from Rust:", message);
+                // //console.log("Received from Rust:", message);
                 const json = JSON.parse(message);
                 const { target, content } = json;
 

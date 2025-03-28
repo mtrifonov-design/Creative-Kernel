@@ -43,12 +43,16 @@ function sendMessage(id: string, message: any) {
 }
 
 window.addEventListener("message", (event: MessageEvent) => {
-    const message = JSON.parse(event.data);
-
-    
+    //console.log(`Received message from ${event.origin}:`, event.data);
+    let message;
+    try {
+        message = JSON.parse(event.data);
+    } catch {
+        return;
+    }
     if (message.type === 'mog-message') {
         const { target, content, pw } = message.content;
-        // console.log(`MESSAGE ${pw_id[pw]} --> ${target}:\n\n${content}`,pw);
+        // //console.log(`MESSAGE ${pw_id[pw]} --> ${target}:\n\n${content}`,pw);
         const source = pw_id[pw];
         const e = new CustomEvent("mog-message", {
             detail: {

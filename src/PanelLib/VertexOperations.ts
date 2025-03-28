@@ -103,7 +103,7 @@ function split(tree: Tree, vertexId: string, direction: string): Tree {
     tree = overwriteVertex(tree, vertexId, c);
 
     if (DEBUG) {
-        console.log("create", tree);
+        //console.log("create", tree);
     }
 
     return tree;
@@ -121,7 +121,7 @@ function setPercentage(tree: Tree, vertexId: string, percentage: number): Tree {
         (draft[vertexId] as VertexC).percentage = percentage;
     });
     if (DEBUG) {
-        console.log("setPercentage", tree);
+        //console.log("setPercentage", tree);
     }
     return tree;
 }
@@ -154,7 +154,7 @@ function close(tree: Tree, vertexId: string): Tree {
     tree = overwriteVertex(tree, v.parentId, survivingSilbling);
 
     if (DEBUG) {
-        console.log("close", tree);
+        //console.log("close", tree);
     }
     return tree;
 }
