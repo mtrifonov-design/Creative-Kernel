@@ -26,7 +26,10 @@ const processEvent = async (event: Event) => {
     const [_3, target_id, _4] = target.split('::');
 
     //console.log("REGISTRY",JSON.stringify(registry));
-    console.log(`MESSAGE ${source_id} --> ${target_id}:\n\n${JSON.stringify(content, null, 2)}`);
+    // shorten the message
+    const prettyMessage = JSON.stringify(content, null, 2).slice(0, 100);
+
+    console.log(`MESSAGE ${source_id} --> ${target_id}:\n\n${prettyMessage}`);
 
     if (target !== 'CORE::CORE::CORE') {
         const [type,id, location] = target.split('::');

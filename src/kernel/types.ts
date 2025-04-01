@@ -1,0 +1,44 @@
+type CK_Unit =
+    | CK_WorkerUnit | CK_InstallUnit | CK_BlockerUnit;
+
+type CK_Instance = {
+    modality: string;
+    resource_id: string;
+    instance_id: string;
+}
+
+type CK_WorkerUnit = {
+    type: 'worker';
+    receiver: CK_Instance;
+    sender: CK_Instance;
+    payload: any;
+}
+type CK_InstallUnit = {
+    type: 'install';
+    instance: CK_Instance;
+}
+type CK_BlockerUnit = {
+    type: 'blocker';
+    blocker_id: string;
+    blocker_count: number;
+}
+
+type CK_Threads = {
+    [key: string]: CK_Unit[];
+}
+
+
+interface CK_Modality {
+    installUnit: (unit: CK_InstallUnit) => Promise<boolean>;
+    computeUnit: (unit: CK_WorkerUnit) => { [threadId: string]: CK_Unit[] };
+}
+
+export {
+    CK_Modality,
+    CK_Unit,
+    CK_WorkerUnit,
+    CK_InstallUnit,
+    CK_BlockerUnit,
+    CK_Instance,
+    CK_Threads
+}
