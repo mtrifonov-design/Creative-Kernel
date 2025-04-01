@@ -1,0 +1,6 @@
+- Rewrite creative kernel operations as immutable.
+- Rewrite Debug View in react environment.
+- Write Iframe and Backend Modalities
+- Hook up P&C Prototype
+- Add auto run option
+- Add Breakpoint functionality
