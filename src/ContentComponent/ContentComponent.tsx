@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { getIframe } from "../iframe_manager";
+// import { getIframe } from "../iframe_manager";
 
 
 const SearchBar: React.FC<{
@@ -44,18 +44,22 @@ const ContentComponent: React.FC<{
     const [address, setAddress] = React.useState<string | undefined>(undefined);
 
     useEffect(() => {
-        const iframe = getIframe(id,address);
-        //console.log(id,iframe);
-        if (!iframe) {
+        if (!address) {
             return;
         }
-        iframe.style.width = '100%';
-        iframe.style.height = '100%';
-        iframe.style.border = 'none';
-        if (ref) {
-            ref.current.innerHTML = '';
-            ref.current.appendChild(iframe);
+
+        const callback = (iframe: HTMLIFrameElement) => {
+            iframe.style.width = '100%';
+            iframe.style.height = '100%';
+            iframe.style.border = 'none';
+            iframe.style.display = 'block';
+            if (ref) {
+                ref.current.innerHTML = '';
+                ref.current.appendChild(iframe);
+            }
         }
+        const iframeModality = globalThis.IFRAME_MODALITY;
+        iframeModality.getIframe(id,address, callback);
         return () => {
 
         }

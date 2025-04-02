@@ -33,7 +33,7 @@ type CK_Threads = {
 
 interface CK_Modality {
     installUnit: (unit: CK_InstallUnit) => Promise<boolean>;
-    computeUnit: (unit: CK_WorkerUnit) => { [threadId: string]: CK_Unit[] };
+    computeUnit: (unit: CK_WorkerUnit) => Promise<{ [threadId: string]: CK_Unit[] }>;
 }
 
 export {

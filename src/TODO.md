@@ -1,6 +1,6 @@
 - Rewrite creative kernel operations as immutable. DONE.
-- Rewrite Debug View in react environment.
-- Write Iframe and Backend Modalities
+- Rewrite Debug View in react environment. DONE.
+- Write Iframe and Backend Modalities. IN PROGRESS.
 - Hook up P&C Prototype
 - Add auto run option
 - Add Breakpoint functionality

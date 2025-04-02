@@ -32,6 +32,13 @@ class CreativeKernel {
         snapshot: any;
     }) {
         this.modalities = modalities;
+        const modalityKeys = Object.keys(modalities);
+        modalityKeys.forEach((key) => {
+            const modality = modalities[key];
+            modality.connectToKernel(this);
+        });
+
+
         this.threads = {};
         this.restoreSnapshot(snapshot);
     }
@@ -100,7 +107,6 @@ class CreativeKernel {
                 throw new Error(`Modality ${unit.instance.modality} not found`);
             }
             const success = await modality.installUnit(unit);
-
             if (success) {
                 this.registry = [...this.registry, unit.instance];
                 this.threads = produce(this.threads, (draft) => {
@@ -192,7 +198,56 @@ class CreativeKernel {
         this.notifySubscribers();
     }
 
-    public computeUnit(threadId: string, unitId: string) {
+    public pushWorkload(workload: {
+        [threadId: string]: CK_Unit[];
+    }) {
+        console.log("workload", workload);
+        this.threads = produce(this.threads, (draft) => {
+            const threadKeys = Object.keys(workload);
+            const threadQueues = workload;
+            threadKeys.forEach((key) => {
+                const threadQueue = threadQueues[key];
+                if (!draft[key]) {
+                    draft[key] = [];
+                }
+                // modify thread queue by queueing installs where needed
+                const newThreadQueue: CK_Unit[] = [];
+                threadQueue.forEach((unit: CK_Unit) => {
+                    unit.id = generateId();
+                    if (unit.type === "blocker") {
+                        newThreadQueue.push(unit);
+                        return;
+                    }
+                    if (unit.type === "install") {
+                        throw new Error("install Queued by modality")
+                    }
+                    if (unit.type === "worker") {
+                        // check if worker receiver in registry
+                        const receiver = this.registry.find((item) => {
+                            return item.instance_id === unit.receiver.instance_id
+                                && item.resource_id === unit.receiver.resource_id
+                                && item.modality === unit.receiver.modality;
+                        });
+                        if (!receiver) {
+                            newThreadQueue.push({
+                                type: "install",
+                                instance: unit.receiver,
+                                id: generateId(),
+                            })
+                        }
+                        newThreadQueue.push(unit);
+                        return;
+                    }
+                    throw new Error("Unknown unit type");
+                });
+                draft[key].push(...newThreadQueue);
+            });
+        })
+        this.notifySubscribers();
+
+    }
+
+    public async computeUnit(threadId: string, unitId: string) {
         const ready = this.checkIfUnitReady(threadId, unitId);
         if (!ready) {
             throw new Error(`Unit ${unitId} in thread ${threadId} is not ready`);
@@ -203,7 +258,7 @@ class CreativeKernel {
         if (!modality) {
             throw new Error(`Modality ${unit.receiver.modality} not found`);
         }
-        const threadQueues = modality.computeUnit(unit);
+        const threadQueues = await modality.computeUnit(unit);
         if (!threadQueues) {
             throw new Error(`Error computing unit ${unitIdx} in thread ${threadId}`);
         }

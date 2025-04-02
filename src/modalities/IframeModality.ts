@@ -1,0 +1,173 @@
+import CreativeKernel from "../kernel/kernel";
+import { CK_InstallUnit, CK_Modality, CK_Unit, CK_WorkerUnit } from "../kernel/types";
+
+const generatePw = () => {
+    return Math.random().toString(36).substring(2, 15);
+}
+
+const MAX_TIMEOUT = 5000;
+class IframeModality implements CK_Modality {
+    sendMessage(id: string, message: any) {
+        const iframe = this.instances[id];
+        //post message
+        if (iframe) {
+            iframe.contentWindow?.postMessage({
+                type: 'ck-message',
+                payload: message
+            }, '*');
+        }
+    }
+
+    kernel: CreativeKernel | null = null;
+    connectToKernel(kernel: CreativeKernel) {
+        this.kernel = kernel;
+    }
+
+    constructor() {
+        window.addEventListener('message', (event) => {
+            const { data } = event;
+            if (data.type === 'ck-message' 
+                && data.payload.pw
+                && data.payload.PUSH_WORKLOAD
+            ) {
+                const pw = data.payload.pw;
+                const instance_id = this.pw_id[pw];
+                if (instance_id) {
+                    const response = event.data.payload.workload;
+                    const responseKeys = Object.keys(response);
+                    responseKeys.forEach((key) => {
+                        const threadQueue = response[key];
+                        threadQueue.forEach((unit: CK_Unit) => {
+                            if (unit.type === "worker") {
+                                const instance_id = this.pw_id[pw];
+                                const resource_id = this.id_resource[instance_id];
+                                unit.sender = {
+                                    modality: "iframe",
+                                    resource_id: resource_id,
+                                    instance_id: instance_id,
+                                }
+                            }
+                        });
+                    })
+                    const kernel = this.kernel;
+                    if (kernel) {
+                        kernel.pushWorkload(response);
+                    }
+                }
+            }
+        });
+    }
+
+
+    pw_id: { [pw: string]: string } = {};
+    id_resource: { [id: string]: string } = {};
+    instances: { [id: string]: HTMLIFrameElement } = {};
+    async installUnit(unit: CK_InstallUnit): Promise<boolean> {
+        const { instance } = unit;
+        const { instance_id, resource_id } = instance;
+        const pw = generatePw();
+        this.pw_id[pw] = instance_id;
+        this.id_resource[instance_id] = resource_id;
+        const iframe = document.createElement('iframe');
+        iframe.src = resource_id;
+        this.instances[instance_id] = iframe;
+        console.log("Iframe created", iframe, iframe.src);
+        iframe.onload = () => {
+            console.log("Iframe loaded");
+            this.sendMessage(instance_id, { CK_INSTALL: true, pw: pw });
+        }
+        iframe.style.display = 'none';
+        document.body.appendChild(iframe);
+        // await a return message from the iframe
+        const success = await new Promise((resolve) => {
+            const listener = (event: MessageEvent) => {
+                if (event.data.type === 'ck-message' 
+                    && event.data.payload.pw === pw
+                    && event.data.payload.CK_INSTALL === true   
+                ) {
+                    window.removeEventListener('message', listener);
+                    resolve(true);
+                }
+            };
+            // add a timeout
+            setTimeout(() => {
+                window.removeEventListener('message', listener);
+                resolve(false);
+            }, MAX_TIMEOUT);
+            window.addEventListener('message', listener);
+        });
+
+        if (success) {
+            const callback = this.installCallbacks[instance_id];
+            if (callback) {
+                callback(iframe);
+                delete this.installCallbacks[instance_id];
+            }
+        }
+
+        return success as boolean;
+    }
+    async computeUnit(unit: CK_WorkerUnit): Promise<{ [threadId: string]: CK_Unit[] }> {
+
+        const { receiver } = unit;
+        const { instance_id } = receiver;
+        
+        this.sendMessage(instance_id, { CK_COMPUTE: true, unit: unit });
+        // await a return message from the iframe
+        const response = await new Promise((resolve) => {
+            const listener = (event: MessageEvent) => {
+                if (event.data.type === 'ck-message' 
+                    && event.data.payload.pw === this.pw_id[instance_id]
+                    && event.data.payload.CK_COMPUTE === true
+                ) {
+                    window.removeEventListener('message', listener);
+                    const response = event.data.payload.response;
+                    const responseKeys = Object.keys(response);
+                    responseKeys.forEach((key) => {
+                        const threadQueue = response[key];
+                        threadQueue.forEach((unit: CK_Unit) => {
+                            if (unit.type === "worker") {
+                                unit.sender = receiver;
+                            }
+                        });
+                    })
+                    resolve(response);
+                }
+            };
+            // add a timeout
+            setTimeout(() => {
+                window.removeEventListener('message', listener);
+                resolve(false);
+            }, MAX_TIMEOUT);
+            window.addEventListener('message', listener);
+        });
+
+        if (response) {
+            return response as { [threadId: string]: CK_Unit[] };
+        }
+        throw new Error("Error computing unit");
+    }
+
+    installCallbacks: { [id: string]: (iframe: HTMLIFrameElement) => void } = {};
+    getIframe(id: string, address: string, callback: (iframe: HTMLIFrameElement) => void) {
+        const iframe = this.instances[id];
+        if (iframe) {
+            callback(iframe);
+        }
+        const kernel = this.kernel;
+        this.installCallbacks[id] = callback;
+        if (kernel) {
+            kernel.pushUnit("default", {
+                type: "install",
+                instance: {
+                    modality: "iframe",
+                    resource_id: address,
+                    instance_id: id,
+                }
+            } as CK_InstallUnit);
+        }
+        
+    }
+}
+
+export default IframeModality;

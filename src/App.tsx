@@ -8,15 +8,21 @@ import { CK_Threads } from "./kernel/types";
 import { CK_Instance } from "./kernel/types";
 import { MockModality } from "./modalities/MockModality";
 import { ResourceA } from "./integration_testing/browser/resources";
+import IframeModality from './modalities/IframeModality';
 
 
 const modality = new MockModality();
+const iframeModality = new IframeModality();
 const kernel = new CreativeKernel({
     modalities: {
-        mock: modality,
+        iframe: iframeModality,
     },
     snapshot: null,
 });
+
+class ExampleResource {
+
+}
 
 
 const unit: CK_Unit = {
@@ -27,10 +33,12 @@ const unit: CK_Unit = {
         instance_id: "test_instance",
     },
 };
-modality.addResource("resourceA", ResourceA);
+modality.addResource("resourceA", ExampleResource);
 const threadId = "test_thread";
 kernel.pushUnit(threadId, unit);
 
+
+globalThis.IFRAME_MODALITY = iframeModality;
 globalThis.CREATIVE_KERNEL = kernel;
 
 

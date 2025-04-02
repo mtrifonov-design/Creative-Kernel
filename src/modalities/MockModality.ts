@@ -23,6 +23,7 @@ class MockModality implements CK_Modality {
             } 
             return false;
         } catch (error) {
+            console.error("Error installing unit:", error);
             return false;
         }
     }

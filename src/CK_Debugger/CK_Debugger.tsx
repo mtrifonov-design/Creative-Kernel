@@ -1,5 +1,6 @@
 import React, { createContext, useSyncExternalStore } from "react";
 import CK_ThreadsPage from "./CK_ThreadsPage";
+import CK_InstancesPage from "./CK_InstancesPage";
 
 const getThreadSnapshot = () => {
     const kernel = (window as any).CREATIVE_KERNEL;
@@ -19,8 +20,15 @@ const subscribe = (callback: () => void) => {
     }
 }
 
-function CK_Page() {
-    return <CK_ThreadsPage />
+function CK_Page({page}: {page: string}) {
+    console.log("Page", page);
+    if (page === "instances") {
+        return <CK_InstancesPage />
+    }
+    if (page === "threads") {
+        return <CK_ThreadsPage />
+    }
+    return <div>Not found.</div>
 }
 
 const ThreadContext = createContext(null);
@@ -29,6 +37,10 @@ function CK_Debugger() {
 
     const threads = useSyncExternalStore(subscribe, getThreadSnapshot)
     const registry = useSyncExternalStore(subscribe, getRegistrySnapshot)
+
+    const [currentPage, setCurrentPage] = React.useState("threads");
+
+    console.log("Threads", threads);
 
 
     return (
@@ -42,8 +54,28 @@ function CK_Debugger() {
                 height: "400px",
             }}>
                 <div>DEBUGGER</div>
-                <div>PAGES</div>
-                <CK_Page />
+                <div style={{
+                    display: "flex",
+                    gap: "10px",
+                }}>
+                    <div
+                        style={{
+                            cursor: "pointer",
+                            fontWeight: currentPage === "threads" ? "bold" : "normal",
+                            textDecoration: currentPage === "threads" ? "underline" : "none",
+                        }}
+                        onClick={() => setCurrentPage("threads")}   
+                    >Threads</div>
+                    <div
+                        style={{
+                            cursor: "pointer",
+                            fontWeight: currentPage === "instances" ? "bold" : "normal",
+                            textDecoration: currentPage === "instances" ? "underline" : "none",
+                        }}
+                        onClick={() => setCurrentPage("instances")}   
+                    >Instances</div>
+                </div>
+                <CK_Page page={currentPage} />
 
 
                 {/* Add more UI elements here */}
