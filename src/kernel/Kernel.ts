@@ -1,12 +1,17 @@
-import { CK_Modality,
+import { produce } from "immer";
+import {
+    CK_Modality,
     CK_Unit,
     CK_WorkerUnit,
     CK_InstallUnit,
     CK_BlockerUnit,
     CK_Instance,
-    CK_Threads 
+    CK_Threads
 } from "./types";
 
+function generateId() {
+    return Math.random().toString(36).substring(2, 15);
+}
 
 
 class CreativeKernel {
@@ -21,20 +26,14 @@ class CreativeKernel {
         debugDevice,
         snapshot
     }: {
-        modalities: any;
-        debugDevice: any;
+        modalities: {
+            [key: string]: CK_Modality;
+        };
         snapshot: any;
     }) {
-
-        this.connectToDebugDevice(debugDevice);
         this.modalities = modalities;
         this.threads = {};
         this.restoreSnapshot(snapshot);
-    }
-
-    private connectToDebugDevice(debugDevice: any) {
-        this.debugDevice = debugDevice;
-        this.debugDevice.connectKernel()
     }
 
     private restoreSnapshot(snapshot: any) {
@@ -43,15 +42,34 @@ class CreativeKernel {
         }
     }
 
+    private subscibers : Function[] = [];
+    public subscribe(callback: () => void) {
+        this.subscibers.push(callback);
+        return () => {
+            this.subscibers = this.subscibers.filter((cb) => cb !== callback);
+        }
+    }
+
+    notifySubscribers() {
+        this.subscibers.forEach((callback) => {
+            callback();
+        });
+    }
+
     public getThreads() {
         return this.threads;
     }
 
-    public checkIfUnitReady(threadId: string, unitIdx: number) {
+    public getRegistry() {
+        return this.registry;
+    }
+
+    public checkIfUnitReady(threadId: string, unitId: string) {
         const thread = this.threads[threadId];
         if (!thread) {
             throw new Error(`Thread ${threadId} does not exist`);
         }
+        const unitIdx = thread.findIndex((unit) => unit.id === unitId);
         const unit = thread[unitIdx];
         if (!unit) {
             throw new Error(`Unit ${unitIdx} does not exist in thread ${threadId}`);
@@ -63,14 +81,16 @@ class CreativeKernel {
         return false;
     }
 
-    public async installUnit(threadId: string, unitIdx: number) {
+    public async installUnit(threadId: string, unitId: string) {
+
         const thread = this.threads[threadId];
         if (!thread) {
             throw new Error(`Thread ${threadId} does not exist`);
         }
+        const unitIdx = thread.findIndex((unit) => unit.id === unitId);
         const unit = thread[unitIdx];
         if (!unit) {
-            throw new Error(`Unit ${unitIdx} does not exist in thread ${threadId}`);
+            throw new Error(`Unit ${unitId} does not exist in thread ${threadId}`);
         }
         const unitType = unit.type;
         if (unitType === "install") {
@@ -80,20 +100,25 @@ class CreativeKernel {
                 throw new Error(`Modality ${unit.instance.modality} not found`);
             }
             const success = await modality.installUnit(unit);
+
             if (success) {
-                // remove the unit from the thread
-                this.threads[threadId].splice(unitIdx, 1);
-                console.log(this.threads);
-                // check if the thread is empty
-                this.registry.push(unit.instance);
-                if (this.threads[threadId].length === 0) {
-                    delete this.threads[threadId];
-                }
+                this.registry = [...this.registry, unit.instance];
+                this.threads = produce(this.threads, (draft) => {
+                    // remove the unit from the thread
+                    const unitIdx = draft[threadId].findIndex((unit) => unit.id === unitId);
+                    draft[threadId].splice(unitIdx, 1);
+                    // check if the thread is empty
+                    if (draft[threadId].length === 0) {
+                        delete draft[threadId];
+                    }
+                });
+                this.notifySubscribers();
                 return;
             }
             throw new Error(`Error installing unit ${unitIdx} in thread ${threadId}`);
         }
         throw new Error(`Unit ${unitIdx} is not a install unit`);
+
     }
 
     private resolveBlockerUnits() {
@@ -133,39 +158,46 @@ class CreativeKernel {
             return;
         }
 
-        threadKeys.forEach((threadId) => {
-            const thread = this.threads[threadId];
-            if (thread) {
-                const unit = thread[0];
-                if (unit && unit.type === "blocker") {
-                    if (blockerIdsDelete.includes(unit.blocker_id)) {
-                        this.threads[threadId].splice(0, 1);
+        this.threads = produce(this.threads, (draft) => {
+
+            threadKeys.forEach((threadId) => {
+                const thread = draft[threadId];
+                if (thread) {
+                    const unit = thread[0];
+                    if (unit && unit.type === "blocker") {
+                        if (blockerIdsDelete.includes(unit.blocker_id)) {
+                            draft[threadId].splice(0, 1);
+                        }
                     }
                 }
-            }
+            });
+            // check if the thread is empty
+            threadKeys.forEach((threadId) => {
+                if (draft[threadId].length === 0) {
+                    delete draft[threadId];
+                }
+            });
         });
-        // check if the thread is empty
-        threadKeys.forEach((threadId) => {
-            if (this.threads[threadId].length === 0) {
-                delete this.threads[threadId];
-            }
-        });
-
         this.resolveBlockerUnits();
     }
 
     public pushUnit(threadId: string, unit: CK_Unit) {
-        if (!this.threads[threadId]) {
-            this.threads[threadId] = [];
-        }
-        this.threads[threadId].push(unit);
+        this.threads = produce(this.threads, (draft) => {
+            unit.id = generateId();
+            if (!draft[threadId]) {
+                draft[threadId] = [];
+            }
+            draft[threadId].push(unit);
+        })
+        this.notifySubscribers();
     }
 
-    public computeUnit(threadId: string, unitIdx: number) {
-        const ready = this.checkIfUnitReady(threadId, unitIdx);
+    public computeUnit(threadId: string, unitId: string) {
+        const ready = this.checkIfUnitReady(threadId, unitId);
         if (!ready) {
-            throw new Error(`Unit ${unitIdx} in thread ${threadId} is not ready`);
+            throw new Error(`Unit ${unitId} in thread ${threadId} is not ready`);
         }
+        const unitIdx = this.threads[threadId].findIndex((unit) => unit.id === unitId);
         const unit = this.threads[threadId][unitIdx] as CK_WorkerUnit;
         const modality = this.modalities[unit.receiver.modality];
         if (!modality) {
@@ -175,50 +207,56 @@ class CreativeKernel {
         if (!threadQueues) {
             throw new Error(`Error computing unit ${unitIdx} in thread ${threadId}`);
         }
-        const threadKeys = Object.keys(threadQueues);
-        threadKeys.forEach((key) => {
-            const threadQueue = threadQueues[key];
-            if (!this.threads[key]) {
-                this.threads[key] = [];
-            }
-            // modify thread queue by queueing installs where needed
-            const newThreadQueue: CK_Unit[] = [];
-            threadQueue.forEach((unit: CK_Unit) => {
-                if (unit.type === "blocker") {
-                    newThreadQueue.push(unit);
-                    return;
+
+        this.threads = produce(this.threads, (draft) => {
+            const threadKeys = Object.keys(threadQueues);
+            threadKeys.forEach((key) => {
+                const threadQueue = threadQueues[key];
+                if (!draft[key]) {
+                    draft[key] = [];
                 }
-                if (unit.type === "install") {
-                    throw new Error("install Queued by modality")
-                }
-                if (unit.type === "worker") {
-                    // check if worker receiver in registry
-                    const receiver = this.registry.find((item) => {
-                        return item.instance_id === unit.receiver.instance_id
-                            && item.resource_id === unit.receiver.resource_id
-                            && item.modality === unit.receiver.modality;
-                    });
-                    if (!receiver) {
-                        newThreadQueue.push({
-                            type: "install",
-                            instance: unit.receiver
-                        })
+                // modify thread queue by queueing installs where needed
+                const newThreadQueue: CK_Unit[] = [];
+                threadQueue.forEach((unit: CK_Unit) => {
+                    unit.id = generateId();
+                    if (unit.type === "blocker") {
+                        newThreadQueue.push(unit);
+                        return;
                     }
-                    newThreadQueue.push(unit);
-                    return;
-                }
-                throw new Error("Unknown unit type");
+                    if (unit.type === "install") {
+                        throw new Error("install Queued by modality")
+                    }
+                    if (unit.type === "worker") {
+                        // check if worker receiver in registry
+                        const receiver = this.registry.find((item) => {
+                            return item.instance_id === unit.receiver.instance_id
+                                && item.resource_id === unit.receiver.resource_id
+                                && item.modality === unit.receiver.modality;
+                        });
+                        if (!receiver) {
+                            newThreadQueue.push({
+                                type: "install",
+                                instance: unit.receiver,
+                                id: generateId(),
+                            })
+                        }
+                        newThreadQueue.push(unit);
+                        return;
+                    }
+                    throw new Error("Unknown unit type");
+                });
+                draft[key].push(...newThreadQueue);
             });
-            this.threads[key].push(...newThreadQueue);
-        });
-        // remove the unit from the thread
-        this.threads[threadId] = this.threads[threadId].splice(unitIdx, 1);
-        // check if the thread is empty
-        if (this.threads[threadId].length === 0) {
-            delete this.threads[threadId];
-        }
+            // remove the unit from the thread
+            draft[threadId] = draft[threadId].splice(unitIdx, 1);
+            // check if the thread is empty
+            if (draft[threadId].length === 0) {
+                delete draft[threadId];
+            }
+        })
         // resolve any blocker units
         this.resolveBlockerUnits();
+        this.notifySubscribers();
     }
 
 }

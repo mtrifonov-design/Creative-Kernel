@@ -1,4 +1,4 @@
-- Rewrite creative kernel operations as immutable.
+- Rewrite creative kernel operations as immutable. DONE.
 - Rewrite Debug View in react environment.
 - Write Iframe and Backend Modalities
 - Hook up P&C Prototype

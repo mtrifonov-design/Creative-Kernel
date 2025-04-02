@@ -12,15 +12,18 @@ type CK_WorkerUnit = {
     receiver: CK_Instance;
     sender: CK_Instance;
     payload: any;
+    id: string;
 }
 type CK_InstallUnit = {
     type: 'install';
     instance: CK_Instance;
+    id: string;
 }
 type CK_BlockerUnit = {
     type: 'blocker';
     blocker_id: string;
     blocker_count: number;
+    id: string;
 }
 
 type CK_Threads = {
