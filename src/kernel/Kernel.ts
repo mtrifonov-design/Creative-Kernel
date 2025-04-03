@@ -259,7 +259,7 @@ class CreativeKernel {
             throw new Error(`Modality ${unit.receiver.modality} not found`);
         }
         const threadQueues = await modality.computeUnit(unit);
-        if (!threadQueues) {
+        if (threadQueues === undefined) {
             throw new Error(`Error computing unit ${unitIdx} in thread ${threadId}`);
         }
 
@@ -303,7 +303,9 @@ class CreativeKernel {
                 draft[key].push(...newThreadQueue);
             });
             // remove the unit from the thread
-            draft[threadId] = draft[threadId].splice(unitIdx, 1);
+            const unitIdx = draft[threadId].findIndex((unit) => unit.id === unitId);
+            console.log("unitIdx", unitIdx);
+            draft[threadId].splice(unitIdx, 1);
             // check if the thread is empty
             if (draft[threadId].length === 0) {
                 delete draft[threadId];

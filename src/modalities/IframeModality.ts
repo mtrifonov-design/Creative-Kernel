@@ -60,6 +60,7 @@ class IframeModality implements CK_Modality {
 
 
     pw_id: { [pw: string]: string } = {};
+    id_pw: { [id: string]: string } = {};
     id_resource: { [id: string]: string } = {};
     instances: { [id: string]: HTMLIFrameElement } = {};
     async installUnit(unit: CK_InstallUnit): Promise<boolean> {
@@ -67,6 +68,7 @@ class IframeModality implements CK_Modality {
         const { instance_id, resource_id } = instance;
         const pw = generatePw();
         this.pw_id[pw] = instance_id;
+        this.id_pw[instance_id] = pw;
         this.id_resource[instance_id] = resource_id;
         const iframe = document.createElement('iframe');
         iframe.src = resource_id;
@@ -74,7 +76,7 @@ class IframeModality implements CK_Modality {
         console.log("Iframe created", iframe, iframe.src);
         iframe.onload = () => {
             console.log("Iframe loaded");
-            this.sendMessage(instance_id, { CK_INSTALL: true, pw: pw });
+            this.sendMessage(instance_id, { CK_INSTALL: true, pw: pw, instanceId : instance_id });
         }
         iframe.style.display = 'none';
         document.body.appendChild(iframe);
@@ -116,12 +118,14 @@ class IframeModality implements CK_Modality {
         // await a return message from the iframe
         const response = await new Promise((resolve) => {
             const listener = (event: MessageEvent) => {
+                console.log(event.data)
                 if (event.data.type === 'ck-message' 
-                    && event.data.payload.pw === this.pw_id[instance_id]
+                    && event.data.payload.pw === this.id_pw[instance_id]
                     && event.data.payload.CK_COMPUTE === true
                 ) {
                     window.removeEventListener('message', listener);
                     const response = event.data.payload.response;
+                    console.log(response);
                     const responseKeys = Object.keys(response);
                     responseKeys.forEach((key) => {
                         const threadQueue = response[key];
@@ -142,7 +146,7 @@ class IframeModality implements CK_Modality {
             window.addEventListener('message', listener);
         });
 
-        if (response) {
+        if (response !== false) {
             return response as { [threadId: string]: CK_Unit[] };
         }
         throw new Error("Error computing unit");

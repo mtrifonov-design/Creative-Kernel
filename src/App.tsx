@@ -9,13 +9,16 @@ import { CK_Instance } from "./kernel/types";
 import { MockModality } from "./modalities/MockModality";
 import { ResourceA } from "./integration_testing/browser/resources";
 import IframeModality from './modalities/IframeModality';
+import WasmJSModality from './modalities/WasmJSModality';
 
 
 const modality = new MockModality();
 const iframeModality = new IframeModality();
+const wasmJSModality = new WasmJSModality();
 const kernel = new CreativeKernel({
     modalities: {
         iframe: iframeModality,
+        wasmjs: wasmJSModality,
     },
     snapshot: null,
 });
