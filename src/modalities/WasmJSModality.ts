@@ -54,7 +54,14 @@ class WasmJSModality implements CK_Modality {
         }
         const { module, vm, resourceId } = instance;
 
+        try {
         const res = vm.evalCode(`onCompute("${encodeURI(JSON.stringify(unit))}")`);
+
+        if (res.error) {
+            console.error(vm.dump(res.error));
+            return {};
+        }
+        
         const response = vm.dump(res.value);
         const responseKeys = Object.keys(response);
         responseKeys.forEach((key) => {
@@ -70,6 +77,12 @@ class WasmJSModality implements CK_Modality {
             });
         });
         return response as { [threadId: string]: CK_Unit[] };
+        } catch (e) {
+            console.error(e);
+            return {};
+        }
+    
+    
     }
 
 }
