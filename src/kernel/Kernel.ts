@@ -118,6 +118,11 @@ class CreativeKernel {
                         delete draft[threadId];
                     }
                 });
+                this.queuedReceivers = this.queuedReceivers.filter((receiver) => {
+                    return receiver.instance_id !== unit.instance.instance_id
+                        && receiver.resource_id !== unit.instance.resource_id
+                        && receiver.modality !== unit.instance.modality;
+                });
                 this.notifySubscribers();
                 return;
             }
@@ -198,6 +203,7 @@ class CreativeKernel {
         this.notifySubscribers();
     }
 
+    queuedReceivers: CK_Instance[] = [];
     public pushWorkload(workload: {
         [threadId: string]: CK_Unit[];
     }) {
@@ -223,17 +229,28 @@ class CreativeKernel {
                     }
                     if (unit.type === "worker") {
                         // check if worker receiver in registry
+
                         const receiver = this.registry.find((item) => {
                             return item.instance_id === unit.receiver.instance_id
                                 && item.resource_id === unit.receiver.resource_id
                                 && item.modality === unit.receiver.modality;
                         });
                         if (!receiver) {
-                            newThreadQueue.push({
-                                type: "install",
-                                instance: unit.receiver,
-                                id: generateId(),
-                            })
+                            // check if receiver already queued
+                            console.log("queuedReceivers", this.queuedReceivers);
+                            const queuedReceiver = this.queuedReceivers.find((item) => {
+                                return item.instance_id === unit.receiver.instance_id
+                                    && item.resource_id === unit.receiver.resource_id
+                                    && item.modality === unit.receiver.modality;
+                            });
+                            if (!queuedReceiver) {
+                                this.queuedReceivers.push(unit.receiver);
+                                newThreadQueue.push({
+                                    type: "install",
+                                    instance: unit.receiver,
+                                    id: generateId(),
+                                })
+                            }
                         }
                         newThreadQueue.push(unit);
                         return;
@@ -289,11 +306,22 @@ class CreativeKernel {
                                 && item.modality === unit.receiver.modality;
                         });
                         if (!receiver) {
-                            newThreadQueue.push({
-                                type: "install",
-                                instance: unit.receiver,
-                                id: generateId(),
-                            })
+                            // check if receiver already queued
+                            console.log("queuedReceivers", this.queuedReceivers);
+
+                            const queuedReceiver = this.queuedReceivers.find((item) => {
+                                return item.instance_id === unit.receiver.instance_id
+                                    && item.resource_id === unit.receiver.resource_id
+                                    && item.modality === unit.receiver.modality;
+                            });
+                            if (!queuedReceiver) {
+                                this.queuedReceivers.push(unit.receiver);
+                                newThreadQueue.push({
+                                    type: "install",
+                                    instance: unit.receiver,
+                                    id: generateId(),
+                                })
+                            }
                         }
                         newThreadQueue.push(unit);
                         return;
