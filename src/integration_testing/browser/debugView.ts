@@ -74,7 +74,7 @@ function init() {
 
 function renderThreads(kernel) {
     const threads = kernel.getThreads();
-    console.log(threads);
+    //console.log(threads);
     const threadsView = document.getElementById('threadsView');
     threadsView.innerHTML = '';
 

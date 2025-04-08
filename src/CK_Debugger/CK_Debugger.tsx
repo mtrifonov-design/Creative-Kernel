@@ -12,6 +12,11 @@ const getRegistrySnapshot = () => {
     return kernel.getRegistry();
 }
 
+const getRunningSnapshot = () => {
+    const kernel = (window as any).CREATIVE_KERNEL;
+    return kernel.getRunning();
+}
+
 const subscribe = (callback: () => void) => {
     const kernel = (window as any).CREATIVE_KERNEL;
     const unsubscribe = kernel.subscribe(callback);
@@ -21,7 +26,7 @@ const subscribe = (callback: () => void) => {
 }
 
 function CK_Page({page}: {page: string}) {
-    console.log("Page", page);
+    //console.log("Page", page);
     if (page === "instances") {
         return <CK_InstancesPage />
     }
@@ -40,7 +45,16 @@ function CK_Debugger() {
 
     const [currentPage, setCurrentPage] = React.useState("threads");
 
-    console.log("Threads", threads);
+    const running = useSyncExternalStore(subscribe, getRunningSnapshot);
+
+
+
+
+
+    const toggleRunning = () => {
+        const kernel = (window as any).CREATIVE_KERNEL;
+        kernel.setRunning(!kernel.getRunning());
+    }
 
 
     return (
@@ -53,7 +67,13 @@ function CK_Debugger() {
                 gridTemplateRows: "20px 20px 1fr",
                 height: "400px",
             }}>
-                <div>DEBUGGER</div>
+                <div style={{
+                    display: "flex",
+                    gap: "10px",
+                }}>
+                    DEBUGGER
+                    <button onClick={toggleRunning}>{running? "running mode" : "step-through mode"}</button>
+                </div>
                 <div style={{
                     display: "flex",
                     gap: "10px",

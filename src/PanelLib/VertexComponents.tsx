@@ -63,7 +63,7 @@ const VertexCComponent: React.FC<{ id: string }> = ({ id }) => {
 
     const ref = React.useRef<HTMLDivElement>(null);
 
-    //console.log("dragging", dragging);
+    ////console.log("dragging", dragging);
 
     const [tree, setTree] = useContext(TreeContext)!;
     const vertex = tree[id] as VertexC;
@@ -121,7 +121,7 @@ const VertexCComponent: React.FC<{ id: string }> = ({ id }) => {
             }}
             onMouseUp={() => {
                 setDragging(false);
-                // //console.log("mouse up")
+                // ////console.log("mouse up")
             }}
 
             ref={ref}

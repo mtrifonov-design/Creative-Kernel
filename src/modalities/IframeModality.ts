@@ -26,7 +26,7 @@ class IframeModality implements CK_Modality {
     constructor() {
         window.addEventListener('message', (event) => {
             const { data } = event;
-            if (data.type === 'ck-message' 
+            if (data.type === 'ck-message'
                 && data.payload.pw
                 && data.payload.PUSH_WORKLOAD
             ) {
@@ -73,19 +73,19 @@ class IframeModality implements CK_Modality {
         const iframe = document.createElement('iframe');
         iframe.src = resource_id;
         this.instances[instance_id] = iframe;
-        console.log("Iframe created", iframe, iframe.src);
+        //console.log("Iframe created", iframe, iframe.src);
         iframe.onload = () => {
-            console.log("Iframe loaded");
-            this.sendMessage(instance_id, { CK_INSTALL: true, pw: pw, instanceId : instance_id });
+            //console.log("Iframe loaded");
+            this.sendMessage(instance_id, { CK_INSTALL: true, pw: pw, instanceId: instance_id });
         }
         iframe.style.display = 'none';
         document.body.appendChild(iframe);
         // await a return message from the iframe
         const success = await new Promise((resolve) => {
             const listener = (event: MessageEvent) => {
-                if (event.data.type === 'ck-message' 
+                if (event.data.type === 'ck-message'
                     && event.data.payload.pw === pw
-                    && event.data.payload.CK_INSTALL === true   
+                    && event.data.payload.CK_INSTALL === true
                 ) {
                     window.removeEventListener('message', listener);
                     resolve(true);
@@ -113,19 +113,19 @@ class IframeModality implements CK_Modality {
 
         const { receiver } = unit;
         const { instance_id } = receiver;
-        
+
         this.sendMessage(instance_id, { CK_COMPUTE: true, unit: unit });
         // await a return message from the iframe
         const response = await new Promise((resolve) => {
             const listener = (event: MessageEvent) => {
-                console.log(event.data)
-                if (event.data.type === 'ck-message' 
+                //console.log(event.data)
+                if (event.data.type === 'ck-message'
                     && event.data.payload.pw === this.id_pw[instance_id]
                     && event.data.payload.CK_COMPUTE === true
                 ) {
                     window.removeEventListener('message', listener);
                     const response = event.data.payload.response;
-                    console.log(response);
+                    //console.log(response);
                     const responseKeys = Object.keys(response);
                     responseKeys.forEach((key) => {
                         const threadQueue = response[key];
@@ -153,7 +153,7 @@ class IframeModality implements CK_Modality {
     }
 
     installCallbacks: { [id: string]: (iframe: HTMLIFrameElement) => void } = {};
-    getIframe(id: string, address: string, callback: (iframe: HTMLIFrameElement) => void) {
+    async getIframe(id: string, address: string, callback: (iframe: HTMLIFrameElement) => void) {
         const iframe = this.instances[id];
         if (iframe) {
             callback(iframe);
@@ -161,16 +161,19 @@ class IframeModality implements CK_Modality {
         const kernel = this.kernel;
         this.installCallbacks[id] = callback;
         if (kernel) {
-            kernel.pushUnit("default", {
-                type: "install",
-                instance: {
-                    modality: "iframe",
-                    resource_id: address,
-                    instance_id: id,
-                }
-            } as CK_InstallUnit);
+            kernel.pushWorkload(
+                {
+                    default: [{
+                        type: "install",
+                        instance: {
+                            modality: "iframe",
+                            resource_id: address,
+                            instance_id: id,
+                        }
+                    }] as CK_InstallUnit[]
+                })
         }
-        
+
     }
 }
 

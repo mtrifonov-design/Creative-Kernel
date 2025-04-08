@@ -43,6 +43,18 @@ class CreativeKernel {
         this.restoreSnapshot(snapshot);
     }
 
+
+    _running = false;
+    setRunning(running: boolean) {
+        this._running = running;
+        this.notifySubscribers();
+    };
+
+    getRunning() {
+        return this._running;
+    }
+
+
     private restoreSnapshot(snapshot: any) {
         if (snapshot) {
             this.threads = snapshot.threads;
@@ -203,11 +215,15 @@ class CreativeKernel {
         this.notifySubscribers();
     }
 
+    workloadProcessing = false;
     queuedReceivers: CK_Instance[] = [];
-    public pushWorkload(workload: {
+    public async pushWorkload(workload: {
         [threadId: string]: CK_Unit[];
     }) {
-        console.log("workload", workload);
+        if (this.workloadProcessing) return;
+        this.workloadProcessing = true;
+
+        //console.log("workload", workload);
         this.threads = produce(this.threads, (draft) => {
             const threadKeys = Object.keys(workload);
             const threadQueues = workload;
@@ -225,7 +241,8 @@ class CreativeKernel {
                         return;
                     }
                     if (unit.type === "install") {
-                        throw new Error("install Queued by modality")
+                        newThreadQueue.push(unit);
+                        return;
                     }
                     if (unit.type === "worker") {
                         // check if worker receiver in registry
@@ -237,7 +254,7 @@ class CreativeKernel {
                         });
                         if (!receiver) {
                             // check if receiver already queued
-                            console.log("queuedReceivers", this.queuedReceivers);
+                            //console.log("queuedReceivers", this.queuedReceivers);
                             const queuedReceiver = this.queuedReceivers.find((item) => {
                                 return item.instance_id === unit.receiver.instance_id
                                     && item.resource_id === unit.receiver.resource_id
@@ -260,8 +277,9 @@ class CreativeKernel {
                 draft[key].push(...newThreadQueue);
             });
         })
+        await this.run();
+        this.workloadProcessing = false;
         this.notifySubscribers();
-
     }
 
     public async computeUnit(threadId: string, unitId: string) {
@@ -307,7 +325,7 @@ class CreativeKernel {
                         });
                         if (!receiver) {
                             // check if receiver already queued
-                            console.log("queuedReceivers", this.queuedReceivers);
+                            //console.log("queuedReceivers", this.queuedReceivers);
 
                             const queuedReceiver = this.queuedReceivers.find((item) => {
                                 return item.instance_id === unit.receiver.instance_id
@@ -332,7 +350,7 @@ class CreativeKernel {
             });
             // remove the unit from the thread
             const unitIdx = draft[threadId].findIndex((unit) => unit.id === unitId);
-            console.log("unitIdx", unitIdx);
+            //console.log("unitIdx", unitIdx);
             draft[threadId].splice(unitIdx, 1);
             // check if the thread is empty
             if (draft[threadId].length === 0) {
@@ -342,6 +360,45 @@ class CreativeKernel {
         // resolve any blocker units
         this.resolveBlockerUnits();
         this.notifySubscribers();
+    }
+
+
+    index = 0;
+    public async run() {
+        //console.log(this._running, "running")
+        if (!this._running) {
+            return;
+        }
+        const firstUnits = Object.keys(this.threads).map((key) => {
+            const thread = this.threads[key];
+            if (thread) {
+                return [key,thread[0]];
+            }
+            return null;
+        }).filter((value) => value !== null) as [threadId: string, unit: CK_Unit][];
+        const eligibleUnits = firstUnits.filter(([threadId,unit]) => {
+            if (unit.type === "install") return true;
+            if (unit.type === "blocker") return false;
+            return this.checkIfUnitReady(threadId, unit.id);
+        })
+        //console.log("firstUnits",firstUnits,"eligibleUnits",eligibleUnits)
+        //console.log(...eligibleUnits.map(([threadId,unit]) => unit.id))
+        
+        if (eligibleUnits.length === 0) {
+            //console.log("done");
+            return;
+        }
+        const [threadId, unit] = eligibleUnits[this.index++ % eligibleUnits.length];
+        const unitId = unit.id;
+        const unitType = unit.type;
+        if (unitType === "worker") {
+            await this.computeUnit(threadId, unitId);
+        }
+        if (unitType === "install") {
+            await this.installUnit(threadId, unitId);
+        }
+        return await this.run();
+
     }
 
 }

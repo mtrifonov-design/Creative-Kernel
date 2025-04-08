@@ -28,17 +28,17 @@ class ExampleResource {
 }
 
 
-const unit: CK_Unit = {
-    type: "install",
-    instance: {
-        modality: "mock",
-        resource_id: "resourceA",
-        instance_id: "test_instance",
-    },
-};
-modality.addResource("resourceA", ExampleResource);
-const threadId = "test_thread";
-kernel.pushUnit(threadId, unit);
+// const unit: CK_Unit = {
+//     type: "install",
+//     instance: {
+//         modality: "mock",
+//         resource_id: "resourceA",
+//         instance_id: "test_instance",
+//     },
+// };
+// modality.addResource("resourceA", ExampleResource);
+// const threadId = "test_thread";
+// kernel.pushUnit(threadId, unit);
 
 
 globalThis.IFRAME_MODALITY = iframeModality;

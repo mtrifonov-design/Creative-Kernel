@@ -8,28 +8,28 @@ const processEvent = async (event: Event) => {
     const { source, target, content } = (event as CustomEvent).detail;
 
     // Check if the target is already registered
-    // //console.log(event)
-    // //console.log(registry,target)
+    // ////console.log(event)
+    // ////console.log(registry,target)
     if (target === 'CORE::CORE::CORE') {
-        console.log("LOG",source,content);
+        //console.log("LOG",source,content);
         return
     }
 
     if (!registry.includes(target)) {
         await install(target);
-        // console.log("REGISTRY",JSON.stringify(registry));
-        // console.log(`INSTALLED ${target}`);
+        // //console.log("REGISTRY",JSON.stringify(registry));
+        // //console.log(`INSTALLED ${target}`);
     }
 
 
     const [_1, source_id, _2] = source.split('::');
     const [_3, target_id, _4] = target.split('::');
 
-    //console.log("REGISTRY",JSON.stringify(registry));
+    ////console.log("REGISTRY",JSON.stringify(registry));
     // shorten the message
     const prettyMessage = JSON.stringify(content, null, 2).slice(0, 100);
 
-    console.log(`MESSAGE ${source_id} --> ${target_id}:\n\n${prettyMessage}`);
+    //console.log(`MESSAGE ${source_id} --> ${target_id}:\n\n${prettyMessage}`);
 
     if (target !== 'CORE::CORE::CORE') {
         const [type,id, location] = target.split('::');
