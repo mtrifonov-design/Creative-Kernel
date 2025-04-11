@@ -8,6 +8,6 @@ Goal: Construct a P&C P5 session that is arbitrarily stoppable. Definining frame
 
 SPRINT
 Goal: Open a P&C P5 session from memory, and edit it.
-- Initialize Session from Memory.
-- Convert Window Manager into Modality
+- Initialize Session from Memory. 
+- Convert Window Manager into Modality. DONE.
 - Debug EditingArea Plugin

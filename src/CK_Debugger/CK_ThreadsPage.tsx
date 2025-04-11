@@ -69,9 +69,15 @@ function Thread({ threadId }: { threadId: string }) {
         return <div>Thread {threadId} not found</div>
     }
     return <div style={{
+        width: "100%",
+        overflowX: "scroll",
+    }}>
+    
+    <div style={{
         height: "75px",
         border: "1px solid black",
-        width: "100%",
+        flexWrap: "nowrap",
+        width: "max-content",
         display: "flex",
     }}>
         <div style={{width: "150px"}}>
@@ -79,8 +85,11 @@ function Thread({ threadId }: { threadId: string }) {
         </div>
         <div style={{
             border: "1px solid black",
-            width: "100%",
+            //width: "100%",
             display: "flex",
+            
+            flexWrap: "nowrap",
+            width: "max-content",
             alignItems: "center",
         }}>
             {thread.map((unit, index) => {
@@ -88,6 +97,7 @@ function Thread({ threadId }: { threadId: string }) {
             })
             }
         </div>
+    </div>
     </div>
 }
 
@@ -163,11 +173,13 @@ function CK_ThreadsPage() {
         <div style={{
             display: "grid",
             gridTemplateColumns: "1fr 300px 400px",
+            width: "100vw",
             height: "100%",
 
         }}>
             <div style={{
                 border: "1px solid black",
+                overflow: "hidden",
 
             }}>
                 <Threads />

@@ -1,14 +1,42 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useSyncExternalStore } from "react";
 import { Tree, VertexB, VertexC } from "./types";
-import { defaultTree, split, close, setDebug, setPercentage } from "./VertexOperations";
+import { split, close, setPercentage } from "./VertexOperations";
 import ContentComponent from "../ContentComponent/ContentComponent";
 
+function setTree(tree: Tree) {
+    const uiModality = globalThis.UI_MODALITY;
+    if (!uiModality) {
+        throw new Error("UI modality not found");
+    }
+    uiModality.setTree(tree);
+}
+
+function subscribe(callback: () => void) {
+    const uiModality = globalThis.UI_MODALITY;
+    if (!uiModality) {
+        throw new Error("UI modality not found");
+    }
+    return uiModality.treeManager.subscribe(callback);
+}
+
+function getSnapshot() {
+    const uiModality = globalThis.UI_MODALITY;
+    if (!uiModality) {
+        throw new Error("UI modality not found");
+    }
+    return uiModality.treeManager.getTree();
+}
+
 const TreeContext = createContext<[Tree, (t: Tree) => void] | null>(null);
-
 const TreeComponent: React.FC = () => {
-    const [tree, setTree] = useState<Tree>(defaultTree()[0]);
 
-    setDebug();
+
+
+    const tree = useSyncExternalStore(subscribe, getSnapshot);
+
+    // const [tree, setTree] = useState<Tree>(defaultTree()[0]);
+
+    // setDebug();
 
     const root = Object.values(tree).find((v) => v.root);
     if (!root) {
