@@ -318,6 +318,7 @@ class CreativeKernel {
                     }
                     if (unit.type === "worker") {
                         // check if worker receiver in registry
+                        //console.log(unit)
                         const receiver = this.registry.find((item) => {
                             return item.instance_id === unit.receiver.instance_id
                                 && item.resource_id === unit.receiver.resource_id

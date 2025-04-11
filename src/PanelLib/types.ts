@@ -15,6 +15,7 @@ type VertexC = {
 type VertexB = {
     type: 'b';
     id: string;
+    payload?: any;
     inhabited: boolean;
     parentId?: string;
     root?: boolean;
