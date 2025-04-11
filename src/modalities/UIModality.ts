@@ -18,13 +18,40 @@ class UIModality implements CK_Modality {
         this.treeManager = new TreeManager();
     }
 
-    async installUnit(unit: CK_InstallUnit): Promise<boolean> {
-        return true;
+    async installUnit(unit: CK_InstallUnit): Promise<false | {[key:string]: any}> {
+        return {
+            persistent: true,
+        };
     }
     async computeUnit(unit: CK_WorkerUnit): Promise<{ [threadId: string]: CK_Unit[] }> {
-        const { payload: tree } = unit;
-        this.treeManager.setTree(tree);
-        return {};
+        const { payload } = unit;
+        const { tree, SAVE_SESSION, LOAD_SESSION, state, key } = payload;
+        if (SAVE_SESSION) {
+            return {
+                persistence: [{
+                    type: "worker",
+                    sender: {
+                        instance_id: "ui",
+                        resource_id: "ui",
+                        modality: "ui",
+                    },
+                    receiver: unit.sender,
+                    payload: {
+                        SAVE_SESSION: true,
+                        key,
+                        state: this.treeManager.getTree(),
+                    },
+                    id: generateId(),
+                }],
+            }
+        } else if (LOAD_SESSION) {
+            this.treeManager.setTree(state);
+            return {};
+        } else {
+            this.treeManager.setTree(tree);
+            return {};
+        }
+
     }
 
     inProgress: boolean = false;
@@ -46,7 +73,9 @@ class UIModality implements CK_Modality {
                     resource_id: "UI",
                     modality: "ui",
                 },
-                payload: tree,
+                payload: {
+                    tree,
+                },
                 id: generateId(),
             }]
         });

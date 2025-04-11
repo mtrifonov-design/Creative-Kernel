@@ -39,16 +39,26 @@ const ContentComponent: React.FC<{
     splitRow: () => void,
     splitColumn: () => void,
     closePanel: () => void,
-}> = ({ id, splitColumn, splitRow, closePanel }) => {
+    payload: any,
+    setPayload: (newPayload: any) => void,
+}> = ({ id, splitColumn, splitRow, closePanel, payload, setPayload }) => {
 
-    const [address, setAddress] = React.useState<string | undefined>(undefined);
+    const address = payload !== undefined ? payload.address : undefined;
+    console.log(address);
+    const setAddress = (newAddress: string) => {
+        setPayload({
+            address: newAddress,
+        })
+    }
+    //const [address, setAddress] = React.useState<string | undefined>(undefined);
 
     useEffect(() => {
         if (!address) {
             return;
         }
-
+        console.log("effect",address)
         const callback = (iframe: HTMLIFrameElement) => {
+            console.log("callback", iframe)
             iframe.style.width = '100%';
             iframe.style.height = '100%';
             iframe.style.border = 'none';

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useSyncExternalStore } from "react";
 import { Tree, VertexB, VertexC } from "./types";
-import { split, close, setPercentage } from "./VertexOperations";
+import { split, close, setPercentage, setPayload } from "./VertexOperations";
 import ContentComponent from "../ContentComponent/ContentComponent";
 
 function setTree(tree: Tree) {
@@ -75,9 +75,17 @@ const VertexBComponent: React.FC<{ id: string }> = ({ id }) => {
         const newTree = close(tree, id);
         setTree(newTree);
     }
+    const payload = vertex.payload;
+    const setNewPayload = (newPayload: any) => {
+        const newTree = setPayload(tree, id, newPayload);
+        setTree(newTree);
+    }
 
     return (
-        <ContentComponent id={id} 
+        <ContentComponent 
+            id={id} 
+            payload={payload}
+            setPayload={setNewPayload}
             splitRow={splitRow}
             splitColumn={splitColumn}
             closePanel={closePanel}

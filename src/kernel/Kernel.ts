@@ -118,9 +118,13 @@ class CreativeKernel {
             if (!modality) {
                 throw new Error(`Modality ${unit.instance.modality} not found`);
             }
-            const success = await modality.installUnit(unit);
-            if (success) {
-                this.registry = [...this.registry, unit.instance];
+            const metadata = await modality.installUnit(unit);
+            if (metadata !== false) {
+                const enrichedInstance = {
+                    ...unit.instance,
+                    metadata,
+                }
+                this.registry = [...this.registry, enrichedInstance];
                 this.threads = produce(this.threads, (draft) => {
                     // remove the unit from the thread
                     const unitIdx = draft[threadId].findIndex((unit) => unit.id === unitId);
@@ -220,10 +224,11 @@ class CreativeKernel {
     public async pushWorkload(workload: {
         [threadId: string]: CK_Unit[];
     }) {
+        console.log("pushWorkload", workload);
         if (this.workloadProcessing) return;
         this.workloadProcessing = true;
 
-        //console.log("workload", workload);
+        console.log("workload", workload);
         this.threads = produce(this.threads, (draft) => {
             const threadKeys = Object.keys(workload);
             const threadQueues = workload;
@@ -277,6 +282,7 @@ class CreativeKernel {
                 draft[key].push(...newThreadQueue);
             });
         })
+        console.log("workload", this.threads);
         await this.run();
         this.workloadProcessing = false;
         this.notifySubscribers();

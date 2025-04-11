@@ -126,6 +126,20 @@ function setPercentage(tree: Tree, vertexId: string, percentage: number): Tree {
     return tree;
 }
 
+function setPayload(tree: Tree, vertexId: string, payload: any): Tree {
+    const v = tree[vertexId];
+    if (v.type !== "b") {
+        throw new Error("Vertex is not of the right type");
+    }
+    tree = produce(tree, (draft) => {
+        (draft[vertexId] as VertexB).payload = payload;
+    });
+    if (DEBUG) {
+        ////console.log("setPayload", tree);
+    }
+    return tree;
+}
+
 function close(tree: Tree, vertexId: string): Tree {
     const v = tree[vertexId];
     if (v.type !== "b") {
@@ -171,4 +185,4 @@ function defaultTree(): [Tree, string] {
 
 
 
-export { split, close, defaultTree, setDebug, setPercentage }
+export { split, close, defaultTree, setDebug, setPercentage, setPayload }

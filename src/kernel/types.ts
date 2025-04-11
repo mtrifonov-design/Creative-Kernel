@@ -5,6 +5,7 @@ type CK_Instance = {
     modality: string;
     resource_id: string;
     instance_id: string;
+    metadata?: any;
 }
 
 type CK_WorkerUnit = {
@@ -18,6 +19,7 @@ type CK_InstallUnit = {
     type: 'install';
     instance: CK_Instance;
     id: string;
+    metadata?: any;
 }
 type CK_BlockerUnit = {
     type: 'blocker';
@@ -32,7 +34,7 @@ type CK_Threads = {
 
 
 interface CK_Modality {
-    installUnit: (unit: CK_InstallUnit) => Promise<boolean>;
+    installUnit: (unit: CK_InstallUnit) => Promise<false | { [key: string]: any }>;
     computeUnit: (unit: CK_WorkerUnit) => Promise<{ [threadId: string]: CK_Unit[] }>;
 }
 

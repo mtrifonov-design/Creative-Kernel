@@ -63,7 +63,8 @@ class IframeModality implements CK_Modality {
     id_pw: { [id: string]: string } = {};
     id_resource: { [id: string]: string } = {};
     instances: { [id: string]: HTMLIFrameElement } = {};
-    async installUnit(unit: CK_InstallUnit): Promise<boolean> {
+    async installUnit(unit: CK_InstallUnit): Promise<false | { [key:string] : any }> {
+        console.log("installUnit", unit);
         const { instance } = unit;
         const { instance_id, resource_id } = instance;
         const pw = generatePw();
@@ -88,7 +89,7 @@ class IframeModality implements CK_Modality {
                     && event.data.payload.CK_INSTALL === true
                 ) {
                     window.removeEventListener('message', listener);
-                    resolve(true);
+                    resolve({});
                 }
             };
             // add a timeout
@@ -98,8 +99,9 @@ class IframeModality implements CK_Modality {
             }, MAX_TIMEOUT);
             window.addEventListener('message', listener);
         });
+        console.log("Iframe loaded", success);
 
-        if (success) {
+        if (success !== false) {
             const callback = this.installCallbacks[instance_id];
             if (callback) {
                 callback(iframe);
@@ -107,7 +109,7 @@ class IframeModality implements CK_Modality {
             }
         }
 
-        return success as boolean;
+        return success as false | { [key:string] : any };
     }
     async computeUnit(unit: CK_WorkerUnit): Promise<{ [threadId: string]: CK_Unit[] }> {
 
@@ -154,14 +156,16 @@ class IframeModality implements CK_Modality {
 
     installCallbacks: { [id: string]: (iframe: HTMLIFrameElement) => void } = {};
     async getIframe(id: string, address: string, callback: (iframe: HTMLIFrameElement) => void) {
+        
         const iframe = this.instances[id];
+        console.log("getIframe", id, address,iframe);
         if (iframe) {
             callback(iframe);
         }
         const kernel = this.kernel;
         this.installCallbacks[id] = callback;
         if (kernel) {
-            kernel.pushWorkload(
+            await kernel.pushWorkload(
                 {
                     default: [{
                         type: "install",

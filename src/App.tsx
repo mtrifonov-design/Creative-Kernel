@@ -6,15 +6,18 @@ import CreativeKernel from "./kernel/kernel";
 import IframeModality from './modalities/IframeModality';
 import WasmJSModality from './modalities/WasmJSModality';
 import UIModality from './modalities/UIModality';
+import PersistenceModality from './modalities/PersistenceModality';
 
 const iframeModality = new IframeModality();
 const wasmJSModality = new WasmJSModality();
 const uiModality = new UIModality();
+const persistenceModality = new PersistenceModality();
 const kernel = new CreativeKernel({
     modalities: {
         iframe: iframeModality,
         wasmjs: wasmJSModality,
         ui: uiModality,
+        persistence: persistenceModality,
     },
     snapshot: null,
 });
@@ -22,6 +25,7 @@ const kernel = new CreativeKernel({
 globalThis.IFRAME_MODALITY = iframeModality;
 globalThis.UI_MODALITY = uiModality;
 globalThis.CREATIVE_KERNEL = kernel;
+globalThis.PERSISTENCE_MODALITY = persistenceModality;
 
 const App: React.FC = () => {
     return <div style={{
