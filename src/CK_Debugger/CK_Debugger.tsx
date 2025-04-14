@@ -65,7 +65,8 @@ function CK_Debugger() {
                 padding: "5px",
                 display: "grid",
                 gridTemplateRows: "20px 20px 1fr",
-                height: "400px",
+                height: "100%",
+                backgroundColor: "white",
             }}>
                 <div style={{
                     display: "flex",

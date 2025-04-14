@@ -143,7 +143,7 @@ class CreativeKernel {
                         && receiver.resource_id !== unit.instance.resource_id
                         && receiver.modality !== unit.instance.modality;
                 });
-                this.notifySubscribers();
+                this.incrementalChange();
                 return;
             }
             throw new Error(`Error installing unit ${unitIdx} in thread ${threadId}`);
@@ -212,16 +212,16 @@ class CreativeKernel {
         this.resolveBlockerUnits();
     }
 
-    public pushUnit(threadId: string, unit: CK_Unit) {
-        this.threads = produce(this.threads, (draft) => {
-            unit.id = generateId();
-            if (!draft[threadId]) {
-                draft[threadId] = [];
-            }
-            draft[threadId].push(unit);
-        })
-        this.notifySubscribers();
-    }
+    // public pushUnit(threadId: string, unit: CK_Unit) {
+    //     this.threads = produce(this.threads, (draft) => {
+    //         unit.id = generateId();
+    //         if (!draft[threadId]) {
+    //             draft[threadId] = [];
+    //         }
+    //         draft[threadId].push(unit);
+    //     })
+    //     this.incrementalChange();
+    // }
 
     workloadProcessing = false;
     queuedReceivers: CK_Instance[] = [];
@@ -327,13 +327,19 @@ class CreativeKernel {
                         delete draft[threadId];
                     }
                 });
-                this.notifySubscribers();
+                this.incrementalChange();
                 return;
             }
             throw new Error(`Error terminating unit ${unitIdx} in thread ${threadId}`);
         }
         throw new Error(`Unit ${unitIdx} is not a terminate unit`);
     }
+
+    incrementalChange() {
+        if (this._running) return;
+        this.notifySubscribers();
+    }
+
 
     public async computeUnit(threadId: string, unitId: string) {
         const ready = this.checkIfUnitReady(threadId, unitId);
@@ -420,7 +426,7 @@ class CreativeKernel {
         })
         // resolve any blocker units
         this.resolveBlockerUnits();
-        this.notifySubscribers();
+        this.incrementalChange();
     }
 
 

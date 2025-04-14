@@ -45,8 +45,9 @@ class UIModality implements CK_Modality {
                 }],
             }
         } else if (LOAD_SESSION) {
-            return this.constructSetTreeWorkload(state);
+            return this.constructSetTreeWorkload(state.tree);
         } else {
+            // console.log("tree");
             this.treeManager.setTree(tree);
             await this.render();
             const pendingWorkload = this.pendingWorkload;
@@ -164,15 +165,22 @@ class UIModality implements CK_Modality {
 
 
     inProgress: boolean = false;
+    pendingTrees : any[] = [];
     async setTree(tree: Tree) {
+        this.pendingTrees.push(tree);
         if (this.inProgress) {
             return;
         }
         this.inProgress = true;
-        const workload = this.constructSetTreeWorkload(tree);
-        ////console.log("deps", deps);
-        ////console.log("UI Modality setTree", workload);
-        await this.kernel?.pushWorkload(workload);
+        while (this.pendingTrees.length > 0) {
+            const nextTree = this.pendingTrees[0];
+            if (nextTree) {
+                const workload = this.constructSetTreeWorkload(nextTree);
+                await this.kernel?.pushWorkload(workload);
+                this.pendingTrees.shift();
+                /// console.log(this.pendingTrees.length);
+            }
+        }
         this.inProgress = false;
     }
 

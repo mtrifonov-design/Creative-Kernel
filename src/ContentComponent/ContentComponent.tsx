@@ -1,6 +1,7 @@
 import React, { useLayoutEffect, useEffect, useRef } from "react";
 import { CK_Unit } from "../kernel/types";
 // import { getIframe } from "../iframe_manager";
+import PlaceholderBox from "./PlaceholderBox";
 
 function generateId() {
     return Math.random().toString(36).substring(2, 15);
@@ -8,7 +9,8 @@ function generateId() {
 
 const SearchBar: React.FC<{
     setAddress: (address: string) => void,
-}> = ({ setAddress }) => {
+    address: string,
+}> = ({ setAddress, address }) => {
     const inputRef = useRef<HTMLInputElement>(null);
     useEffect(() => {
         const listener = (e: KeyboardEvent) => {
@@ -34,7 +36,7 @@ const SearchBar: React.FC<{
         border: "1px solid rgb(180, 180, 180)",
         borderRadius: "5px",
     }}
-        type="text" placeholder="Search" ref={inputRef} 
+        type="text" placeholder={address} ref={inputRef} 
     />
 }
 
@@ -61,24 +63,6 @@ const ContentComponent: React.FC<{
         if (!ref.current) return;
 
         globalThis.UI_MODALITY.setIframe(id,address,ref.current)
-
-
-        // ////console.log("effect",address)
-        // const callback = (iframe: HTMLIFrameElement) => {
-        //     ////console.log("callback", iframe)
-        //     iframe.style.width = '100%';
-        //     iframe.style.height = '100%';
-        //     iframe.style.border = 'none';
-        //     iframe.style.display = 'block';
-        //     if (ref) {
-        //         ref.current.innerHTML = '';
-        //         ref.current.appendChild(iframe);
-        //     }
-        // }
-        // const iframeModality = globalThis.IFRAME_MODALITY;
-        // setTimeout(() => {
-        //     iframeModality.getIframe(id,address, callback);
-        // },0)
         return () => {
             // delete the iframe.
         }
@@ -90,24 +74,28 @@ const ContentComponent: React.FC<{
     return <div style={{
         width: "100%",
         height: "100%",
-        display: "grid",
-        gridTemplateRows: "25px 1fr",
-        padding: "2px",
+
         boxSizing: "border-box",
-        overflow: "hidden",
+        padding: "2px",
     }}>
+        <div style={{
+            borderRadius: "8px",
+            overflow: "hidden",
+            display: "grid",
+            gridTemplateRows: "25px 1fr",
+            width: "100%",
+            height: "100%",
+        }}>
         <div style={{
             backgroundColor: "rgb(230, 230, 230)",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            borderTopLeftRadius: "5px",
-            borderTopRightRadius: "5px",
             padding: "5px",
             gap: "5px",
         }}>
             
-            <SearchBar setAddress={setAddress} />
+            <SearchBar setAddress={setAddress} address={address} key={address} />
             
             <div style={{
                 display: "flex",
@@ -148,10 +136,10 @@ const ContentComponent: React.FC<{
                 display: "block",
             }}
         > </iframe>
-        : <div>Nothing to see.</div>}
+        : <PlaceholderBox setAddress={setAddress} />
+        }
+        </div>
     </div>
-
-
 }
 
 

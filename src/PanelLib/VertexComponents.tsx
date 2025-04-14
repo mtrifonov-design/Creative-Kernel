@@ -3,6 +3,10 @@ import { Tree, VertexB, VertexC } from "./types";
 import { split, close, setPercentage, setPayload } from "./VertexOperations";
 import ContentComponent from "../ContentComponent/ContentComponent";
 
+function generateId() {
+    return Math.random().toString(36).substring(2, 15);
+}
+
 function setTree(tree: Tree) {
     const uiModality = globalThis.UI_MODALITY;
     if (!uiModality) {
@@ -32,9 +36,10 @@ const TreeComponent: React.FC = () => {
 
 
 
-    const tree = useSyncExternalStore(subscribe, getSnapshot);
+    const {tree,renderId} = useSyncExternalStore(subscribe, getSnapshot);
 
     useEffect(() => {
+        // console.log("TreeComponent mounted");
         globalThis.UI_MODALITY.rendered();
     })
 
@@ -55,7 +60,9 @@ const TreeComponent: React.FC = () => {
     }
     if (root.type === "c") {
         return <TreeContext.Provider value={[tree, setTree]}>
+
             <VertexCComponent id={root.id} key={root.id} />
+
         </TreeContext.Provider>
     }
 }
@@ -122,7 +129,7 @@ const VertexCComponent: React.FC<{ id: string }> = ({ id }) => {
         const v = tree[childId];
         if (v.type === "b") {
             return <div style={{pointerEvents: dragging ? "none" : "auto"}}>
-                <VertexBComponent key={childId} id={childId} />
+                <VertexBComponent key={childId} id={childId} dragging={dragging} />
             </div>;
         }
         if (v.type === "c") {
@@ -145,8 +152,10 @@ const VertexCComponent: React.FC<{ id: string }> = ({ id }) => {
             height: "100%",
             overflow: "hidden",
             cursor: dragging ? "grabbing" : "default",
+            
         }}
             onMouseMove={(event) => {
+                //console.log("mouse move", dragging, id);
                 if (!dragging) {
                     return;
                 }
@@ -158,6 +167,7 @@ const VertexCComponent: React.FC<{ id: string }> = ({ id }) => {
                 const y = (event.clientY - rect.top) / rect.height;
                 const newPercentage = direction === "row" ? x : y;
                 const newTree = setPercentage(tree, id, newPercentage);
+                //console.log("new tree");
                 setTree(newTree);
             }}
             onMouseUp={() => {
@@ -168,13 +178,15 @@ const VertexCComponent: React.FC<{ id: string }> = ({ id }) => {
             ref={ref}
         >
             {renderChild(children[0])}
-            <Separator direction={direction} setDragging={setDragging} />
+            <Separator direction={direction} setDragging={setDragging} dragging={dragging} />
             {renderChild(children[1])}
         </div>
     );
 }
 
-const Separator: React.FC<{direction: string, setDragging: (b: boolean) => void }> = ({direction, setDragging}) => {
+const Separator: React.FC<{direction: string, setDragging: (b: boolean) => void, dragging: boolean }> = ({direction, setDragging, dragging}) => {
+    const [hover, setHover] = useState(false);
+
     return (
         <div style={{
             padding: "2px",
@@ -183,12 +195,18 @@ const Separator: React.FC<{direction: string, setDragging: (b: boolean) => void 
             height: "100%",
             cursor: direction === "row" ? "ew-resize" : "ns-resize",
         }}
+        onMouseEnter={(e) => {
+            setHover(true);
+        }}
+        onMouseLeave={(e) => {
+            setHover(false);
+        }}
         onMouseDown={(e) => {
             setDragging(true);
         }}
         >
             <div style={{
-                backgroundColor: "gray",
+                backgroundColor: hover || dragging ? "white" : "transparent",
                 width: "100%",
                 height: "100%",
                 borderRadius: "5px",

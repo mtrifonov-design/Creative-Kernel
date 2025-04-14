@@ -7,14 +7,22 @@ class TreeManager {
 
     constructor() {
         this.tree = defaultTree()[0];
+        this.state = {
+            tree: this.tree,
+            renderId: Math.random().toString(36).substring(2, 15)
+        };
     }
 
     setTree(tree: Tree) {
         this.tree = tree;
+        const renderId = Math.random().toString(36).substring(2, 15);
+        this.state = {
+            tree: this.tree, renderId
+        }
         this.notifySubscribers();
     }
-    getTree(): Tree {
-        return this.tree;
+    getTree(): {tree: Tree, renderId: string} {
+        return this.state;
     }
 
     subscribers : Function[] = [];

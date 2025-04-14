@@ -8,6 +8,10 @@ import WasmJSModality from './modalities/WasmJSModality';
 import UIModality from './modalities/UIModality';
 import PersistenceModality from './modalities/PersistenceModality';
 
+
+const DEBUG = false;
+
+
 const iframeModality = new IframeModality();
 const wasmJSModality = new WasmJSModality();
 const uiModality = new UIModality();
@@ -30,13 +34,15 @@ globalThis.PERSISTENCE_MODALITY = persistenceModality;
 
 const App: React.FC = () => {
     return <div style={{
-        height: "100vh",
-        width: "100vw",
+        height: "100%",
+        width: "100%",
         display: "grid",
-        gridTemplateRows: "2fr 1fr",
+        boxSizing: "border-box",
+        
+        gridTemplateRows: DEBUG ? "1fr 500px" : "1fr",
     }}>
             <TreeComponent />
-            <CK_Debugger />
+            {DEBUG && <CK_Debugger />}
     </div>
 }
 export default App;
