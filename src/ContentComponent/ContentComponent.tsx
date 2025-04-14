@@ -1,6 +1,10 @@
-import React, { useEffect, useRef } from "react";
+import React, { useLayoutEffect, useEffect, useRef } from "react";
+import { CK_Unit } from "../kernel/types";
 // import { getIframe } from "../iframe_manager";
 
+function generateId() {
+    return Math.random().toString(36).substring(2, 15);
+}
 
 const SearchBar: React.FC<{
     setAddress: (address: string) => void,
@@ -44,34 +48,39 @@ const ContentComponent: React.FC<{
 }> = ({ id, splitColumn, splitRow, closePanel, payload, setPayload }) => {
 
     const address = payload !== undefined ? payload.address : undefined;
-    console.log(address);
     const setAddress = (newAddress: string) => {
         setPayload({
             address: newAddress,
-        })
+        });
     }
-    //const [address, setAddress] = React.useState<string | undefined>(undefined);
 
-    useEffect(() => {
+    useLayoutEffect(() => {
         if (!address) {
             return;
         }
-        console.log("effect",address)
-        const callback = (iframe: HTMLIFrameElement) => {
-            console.log("callback", iframe)
-            iframe.style.width = '100%';
-            iframe.style.height = '100%';
-            iframe.style.border = 'none';
-            iframe.style.display = 'block';
-            if (ref) {
-                ref.current.innerHTML = '';
-                ref.current.appendChild(iframe);
-            }
-        }
-        const iframeModality = globalThis.IFRAME_MODALITY;
-        iframeModality.getIframe(id,address, callback);
-        return () => {
+        if (!ref.current) return;
 
+        globalThis.UI_MODALITY.setIframe(id,address,ref.current)
+
+
+        // ////console.log("effect",address)
+        // const callback = (iframe: HTMLIFrameElement) => {
+        //     ////console.log("callback", iframe)
+        //     iframe.style.width = '100%';
+        //     iframe.style.height = '100%';
+        //     iframe.style.border = 'none';
+        //     iframe.style.display = 'block';
+        //     if (ref) {
+        //         ref.current.innerHTML = '';
+        //         ref.current.appendChild(iframe);
+        //     }
+        // }
+        // const iframeModality = globalThis.IFRAME_MODALITY;
+        // setTimeout(() => {
+        //     iframeModality.getIframe(id,address, callback);
+        // },0)
+        return () => {
+            // delete the iframe.
         }
     }, [address]);
 
@@ -130,10 +139,16 @@ const ContentComponent: React.FC<{
                     onClick={closePanel}>X</button>
             </div>
         </div>
-        <div ref={ref}>
-            Nothing to see here...
-        </div>
-
+        {address ? 
+        <iframe ref={ref}
+            style={{
+                width: "100%",
+                height: "100%",
+                border: "none",
+                display: "block",
+            }}
+        > </iframe>
+        : <div>Nothing to see.</div>}
     </div>
 
 

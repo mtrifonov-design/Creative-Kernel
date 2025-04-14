@@ -1,5 +1,5 @@
 import CreativeKernel from "../kernel/kernel";
-import { CK_InstallUnit, CK_Modality, CK_Unit, CK_WorkerUnit } from "../kernel/types";
+import { CK_InstallUnit, CK_Modality, CK_TerminateUnit, CK_Unit, CK_WorkerUnit } from "../kernel/types";
 
 
 function generateId() {
@@ -17,6 +17,10 @@ class PersistenceModality implements CK_Modality {
 
     async installUnit(unit: CK_InstallUnit): Promise<false | { [key: string]: any }> {
         return {};
+    }
+
+    async terminateUnit(unit: CK_TerminateUnit): Promise<boolean> {
+        return true; 
     }
 
     session : CK_WorkerUnit[] = [];

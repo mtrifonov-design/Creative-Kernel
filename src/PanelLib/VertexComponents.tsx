@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useSyncExternalStore } from "react";
+import React, { createContext, useContext, useEffect, useState, useSyncExternalStore } from "react";
 import { Tree, VertexB, VertexC } from "./types";
 import { split, close, setPercentage, setPayload } from "./VertexOperations";
 import ContentComponent from "../ContentComponent/ContentComponent";
@@ -33,6 +33,11 @@ const TreeComponent: React.FC = () => {
 
 
     const tree = useSyncExternalStore(subscribe, getSnapshot);
+
+    useEffect(() => {
+        globalThis.UI_MODALITY.rendered();
+    })
+
 
     // const [tree, setTree] = useState<Tree>(defaultTree()[0]);
 
@@ -99,7 +104,7 @@ const VertexCComponent: React.FC<{ id: string }> = ({ id }) => {
 
     const ref = React.useRef<HTMLDivElement>(null);
 
-    ////console.log("dragging", dragging);
+    ////////console.log("dragging", dragging);
 
     const [tree, setTree] = useContext(TreeContext)!;
     const vertex = tree[id] as VertexC;
@@ -157,7 +162,7 @@ const VertexCComponent: React.FC<{ id: string }> = ({ id }) => {
             }}
             onMouseUp={() => {
                 setDragging(false);
-                // ////console.log("mouse up")
+                // ////////console.log("mouse up")
             }}
 
             ref={ref}

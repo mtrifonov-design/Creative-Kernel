@@ -21,6 +21,7 @@ const kernel = new CreativeKernel({
     },
     snapshot: null,
 });
+kernel.setRunning(true);
 
 globalThis.IFRAME_MODALITY = iframeModality;
 globalThis.UI_MODALITY = uiModality;
