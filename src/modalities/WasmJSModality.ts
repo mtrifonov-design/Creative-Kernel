@@ -35,11 +35,22 @@ class WasmJSModality implements CK_Modality {
         const jsCode = await fetch(resource_id+"/index.js").then((res) => res.text());
         const logHandle = vm.newFunction("log", (...args) => {
             const nativeArgs = args.map(vm.dump);
-            //////console.log(...nativeArgs);
+            console.log(...nativeArgs);
         });
         vm.setProp(vm.global,"log", logHandle);
-        logHandle.dispose();
-            
+        const errorHandle = vm.newFunction("log", (...args) => {
+            const nativeArgs = args.map(vm.dump)
+            console.error("QuickJS:", ...nativeArgs)
+          })
+        // Partially implement `console` object
+        const consoleHandle = vm.newObject()
+        vm.setProp(consoleHandle, "log", logHandle)
+        vm.setProp(consoleHandle, "error", errorHandle)
+        vm.setProp(vm.global, "console", consoleHandle)
+        consoleHandle.dispose()
+        logHandle.dispose()
+        errorHandle.dispose()
+
         const res = vm.evalCode(jsCode);
         const success = vm.unwrapResult(res);
         return manifest;

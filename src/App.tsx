@@ -38,9 +38,12 @@ const App: React.FC = () => {
         width: "100%",
         display: "grid",
         boxSizing: "border-box",
-        
-        gridTemplateRows: DEBUG ? "1fr 500px" : "1fr",
+        gridTemplateRows: DEBUG ? "30px 1fr 500px" : "30px 1fr",
     }}>
+            <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "center", gap: "5px" }}>
+                <button onClick={() => globalThis.PERSISTENCE_MODALITY.saveSession()}>Save session</button>
+                <button onClick={() => globalThis.PERSISTENCE_MODALITY.loadSession()}>Load session</button>
+            </div>
             <TreeComponent />
             {DEBUG && <CK_Debugger />}
     </div>

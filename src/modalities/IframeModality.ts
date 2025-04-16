@@ -114,23 +114,23 @@ class IframeModality implements CK_Modality {
         const iframe = this.instances[instance_id] || document.createElement('iframe');
         this.instances[instance_id] = iframe;
         iframe.onload = (e) => {
-            this.sendMessage(instance_id, { CK_INSTALL: true, pw: pw, instanceId: instance_id });        
+            this.sendMessage(instance_id, { CK_INSTALL: true, pw: pw, instanceId: instance_id, resourceId: resource_id });        
         }
-        const success = await this.initializeIframe(instance_id, resource_id);
-        return {};
+        const metadata = await this.initializeIframe(instance_id, resource_id);
+        return metadata;
     }
 
     async initializeIframe(id: string, src: string) {
         const pw = this.id_pw[id];
         const iframe = this.instances[id];
-        const success = await new Promise((resolve) => {
+        const metadata = await new Promise((resolve) => {
         const listener = (event) => {
             if (event.data.type === 'ck-message'
                 && event.data.payload.pw === pw
                 && event.data.payload.CK_INSTALL === true
             ) {
                 window.removeEventListener('message', listener);
-                resolve(true);
+                resolve(event.data.payload.metadata);
             }
         }
         window.addEventListener('message', listener);
@@ -140,8 +140,7 @@ class IframeModality implements CK_Modality {
             resolve(false);
         }, MAX_TIMEOUT);
         });
-        return success as boolean;
-
+        return metadata as any;
     }
 
 

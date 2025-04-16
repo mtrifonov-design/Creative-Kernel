@@ -5,6 +5,7 @@ const OPTIONS = {
     Code: base+"code",
     Signals: base+"signals",
     P5: base+"p5",
+    Copilot: base+"copilot",
 }
 
 function Option(p: {
