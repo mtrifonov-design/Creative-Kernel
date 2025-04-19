@@ -51,6 +51,16 @@ class WasmJSModality implements CK_Modality {
         logHandle.dispose()
         errorHandle.dispose()
 
+        // create handle for a randomId() function
+        const randomUUID = () => {return crypto.randomUUID()};
+        const randomUUIDHandle = vm.newFunction("randomUUID", (...args) => {
+            const nativeArgs = args.map(vm.dump);
+            const result = randomUUID();
+            return vm.newString(result);
+        });
+        vm.setProp(vm.global, "randomUUID", randomUUIDHandle);
+        randomUUIDHandle.dispose();
+
         const res = vm.evalCode(jsCode);
         const success = vm.unwrapResult(res);
         return manifest;
