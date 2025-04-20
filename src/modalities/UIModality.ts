@@ -45,6 +45,7 @@ class UIModality implements CK_Modality {
                 }],
             }
         } else if (LOAD_SESSION) {
+            if (!state) return {};
             return this.constructSetTreeWorkload(state.tree);
         } else {
             // console.log("tree");

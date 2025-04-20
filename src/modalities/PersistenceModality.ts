@@ -110,6 +110,39 @@ class PersistenceModality implements CK_Modality {
             reader.onload = async (event) => {
                 const text = event.target?.result as string;
                 const session = JSON.parse(text);
+                const registry = this.kernel?.getRegistry();
+                if (!registry) {
+                    return;
+                }
+                const persistentInstances = registry.filter(
+                    (instance) => instance.metadata? instance.metadata.persistent : false
+                )
+                // merge the session with the hello messages
+                // use the hello messages as placeholders for persistent instances that 
+                // are not in the session
+                // const completeSession = persistentInstances.map((instance) => {
+                //     const unit = session.find((unit: CK_WorkerUnit) => {
+                //         return unit.receiver.instance_id === instance.instance_id &&
+                //             unit.receiver.resource_id === instance.resource_id;
+                //     });
+                //     if (unit) {
+                //         return unit;
+                //     }
+                //     return {
+                //         type: "worker",
+                //         sender: {
+                //             instance_id: "persistence",
+                //             resource_id: "persistence",
+                //             modality: "persistence",
+                //         },
+                //         receiver: instance,
+                //         payload: {
+                //             LOAD_SESSION: true,
+                //         }
+                //     }
+                // });
+                // console.log("completeSession", completeSession);
+
                 await this.kernel?.pushWorkload({
                     persistence: session
                 });

@@ -102,13 +102,14 @@ class CreativeKernel {
     }
 
     public async installUnit(threadId: string, unitId: string) {
-
+        
         const thread = this.threads[threadId];
         if (!thread) {
             throw new Error(`Thread ${threadId} does not exist`);
         }
         const unitIdx = thread.findIndex((unit) => unit.id === unitId);
         const unit = thread[unitIdx];
+        //console.log(unit);
         if (!unit) {
             throw new Error(`Unit ${unitId} does not exist in thread ${threadId}`);
         }
@@ -140,8 +141,8 @@ class CreativeKernel {
                 });
                 this.queuedReceivers = this.queuedReceivers.filter((receiver) => {
                     return receiver.instance_id !== unit.instance.instance_id
-                        && receiver.resource_id !== unit.instance.resource_id
-                        && receiver.modality !== unit.instance.modality;
+                        || receiver.resource_id !== unit.instance.resource_id
+                        || receiver.modality !== unit.instance.modality;
                 });
                 this.incrementalChange();
                 return;
@@ -395,6 +396,7 @@ class CreativeKernel {
                                     && item.modality === unit.receiver.modality;
                             });
                             if (!queuedReceiver) {
+                                //console.log("queueing receiver", unit.receiver.instance_id);
                                 this.queuedReceivers.push(unit.receiver);
                                 newThreadQueue.push({
                                     type: "install",
