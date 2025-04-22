@@ -29,6 +29,6 @@ type Vertex =
 | VertexC
 | VertexB
 
-export type { VertexC, VertexB, Tree };
+export type { VertexC, VertexB,Vertex, Tree };
 
 

@@ -2,6 +2,7 @@ import CreativeKernel from "../kernel/kernel";
 import { CK_InstallUnit, CK_Instance, CK_Modality, CK_TerminateUnit, CK_Unit, CK_WorkerUnit } from "../kernel/types";
 import TreeManager from "../PanelLib/TreeManager";
 import { Tree } from "../PanelLib/types";
+import { findChild } from "../PanelLib/VertexOperations";
 
 function generateId() {
     return Math.random().toString(36).substring(2, 15);
@@ -23,10 +24,14 @@ class UIModality implements CK_Modality {
             persistent: true,
         };
     }
+
+    computingUnit: boolean = false;
     async computeUnit(unit: CK_WorkerUnit): Promise<{ [threadId: string]: CK_Unit[] }> {
+        this.computingUnit = true;
         const { payload } = unit;
         const { tree, SAVE_SESSION, LOAD_SESSION, state, key } = payload;
         if (SAVE_SESSION) {
+            this.computingUnit = false;
             return {
                 persistence: [{
                     type: "worker",
@@ -46,18 +51,20 @@ class UIModality implements CK_Modality {
             }
         } else if (LOAD_SESSION) {
             if (!state) return {};
+            this.computingUnit = false;
             return this.constructSetTreeWorkload(state.tree);
         } else {
             // console.log("tree");
             this.treeManager.setTree(tree);
             await this.render();
             const pendingWorkload = this.pendingWorkload;
-            // console.log("pendingWorkload", pendingWorkload);
             this.pendingWorkload = [];
+            this.computingUnit = false;
             return {
                 ui: pendingWorkload,
             };
         }
+
     }
 
     rendered : (() => void) = () => {};
@@ -75,8 +82,14 @@ class UIModality implements CK_Modality {
 
 
 
+    liveIframes: { vertexId: string, id: string, address: string, iframe: HTMLIFrameElement }[] = [];
+
     pendingWorkload: CK_Unit[] = [];
-    setIframe(id: string, address: string, iframe: HTMLIFrameElement) {
+    setIframe(vertexId: string, id: string, address: string, iframe: HTMLIFrameElement) {
+
+        const existingIframe = this.liveIframes.find((v) => v.id === id && v.address === address);
+        if (existingIframe) return;
+        this.liveIframes.push({ vertexId, id, address, iframe });
         globalThis.IFRAME_MODALITY.setIframe(id, address, iframe);
         const instanceExists = this.kernel?.getRegistry().find((instance: CK_Instance) => {
             return instance.instance_id === id && instance.resource_id === address && instance.modality === "iframe";
@@ -109,9 +122,118 @@ class UIModality implements CK_Modality {
             },
             id: generateId(),
         })
+        // console.log("setiframe",this.computingUnit)
+        // //await this.render();
+        if (!this.computingUnit) {
+            this.kernel?.pushWorkload({
+                ui: this.pendingWorkload,
+            });
+            this.pendingWorkload = [];
+        }
     }
 
+    terminateIframes(parentId?: string) {
+        const markedForDeletion = []
+        // console.log("LIVE IFRAMES", this.liveIframes)
+        const { tree } = this.treeManager.getTree();
+        console.log(JSON.stringify(tree,null,2));
+        console.log(this.liveIframes.length)
+        this.liveIframes.forEach(ifr => {
+            console.log("IM RUNNING SOMEHOW",ifr)
+            const { vertexId, id, address, iframe } = ifr;
+            const {tree} = this.treeManager.getTree();
+            const child = findChild(tree, parentId, vertexId);
+            const blocker_id = generateId();
+            if (child) {
+                markedForDeletion.push({id,address});
+                this.pendingWorkload.push({
+                    type: "worker",
+                    sender: {
+                        instance_id: "ui",
+                        resource_id: "ui",
+                        modality: "ui",
+                    },
+                    receiver: {
+                        modality: "iframe",
+                        resource_id: address,
+                        instance_id: id,
+                    },
+                    payload: {
+                        TERMINATE: true,
+                        blocker_id,
+                    },
+                    id: generateId(),
+                });
+                this.pendingWorkload.push({
+                    type: "blocker",
+                    blocker_id,
+                    blocker_count: 2,
+                    id: generateId(),
+                }) ;
+                this.pendingWorkload.push({
+                    type: "terminate",
+                    instance: {
+                        modality: "iframe",
+                        resource_id: address,
+                        instance_id: id,
+                    },
+                    id: generateId(),
+                }) 
+            }
+        })
+        this.liveIframes = this.liveIframes.filter((v) => {
+            const { id, address } = v;
+            const found = markedForDeletion.find((v) => v.id === id && v.address === address);
+            return !found;
+        });
+        // const existingIframe = this.liveIframes.find((v) => v.id === id && v.address === address);
+        // if (!existingIframe) return;
 
+        // this.liveIframes = this.liveIframes.filter((v) => v.id !== id && v.address !== address);
+        // const blocker_id = generateId();
+
+        // this.pendingWorkload.push({
+        //     type: "worker",
+        //     sender: {
+        //         instance_id: "ui",
+        //         resource_id: "ui",
+        //         modality: "ui",
+        //     },
+        //     receiver: {
+        //         modality: "iframe",
+        //         resource_id: address,
+        //         instance_id: id,
+        //     },
+        //     payload: {
+        //         TERMINATE: true,
+        //         blocker_id,
+        //     },
+        //     id: generateId(),
+        // });
+        // this.pendingWorkload.push({
+        //     type: "blocker",
+        //     blocker_id,
+        //     blocker_count: 2,
+        //     id: generateId(),
+        // })  
+        // this.pendingWorkload.push({
+        //     type: "terminate",
+        //     instance: {
+        //         modality: "iframe",
+        //         resource_id: address,
+        //         instance_id: id,
+        //     },
+        //     id: generateId(),
+        // }) 
+        // console.log("terminateIframe",this.computingUnit)
+        // //await this.render();
+        if (!this.computingUnit && this.pendingWorkload.length > 0) {
+            this.kernel?.pushWorkload({
+                ui: this.pendingWorkload,
+            });
+            this.pendingWorkload = [];
+        }
+    }
 
     constructDeps(tree: Tree) {
         const bNodes = Object.values(tree).filter((v) => v.type === "b");

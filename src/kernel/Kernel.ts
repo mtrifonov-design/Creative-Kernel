@@ -109,7 +109,7 @@ class CreativeKernel {
         }
         const unitIdx = thread.findIndex((unit) => unit.id === unitId);
         const unit = thread[unitIdx];
-        //console.log(unit);
+        // console.log(unit);
         if (!unit) {
             throw new Error(`Unit ${unitId} does not exist in thread ${threadId}`);
         }
@@ -213,30 +213,20 @@ class CreativeKernel {
         this.resolveBlockerUnits();
     }
 
-    // public pushUnit(threadId: string, unit: CK_Unit) {
-    //     this.threads = produce(this.threads, (draft) => {
-    //         unit.id = generateId();
-    //         if (!draft[threadId]) {
-    //             draft[threadId] = [];
-    //         }
-    //         draft[threadId].push(unit);
-    //     })
-    //     this.incrementalChange();
-    // }
-
     workloadProcessing = false;
+    pendingWorkloads : { [threadId: string]: CK_Unit[] }[] = [];
+
     queuedReceivers: CK_Instance[] = [];
     public async pushWorkload(workload: {
         [threadId: string]: CK_Unit[];
     }) {
-        ////console.log("pushWorkload", workload);
+        if (Object.keys(workload).length === 0) return;
         if (this.workloadProcessing) {
-            console.error(workload);
-            throw new Error("Cannot push workload while processing");
+            //console.log("Workload processing, pushing workload to queue");
+            this.pendingWorkloads.push(workload);
+            return;
         };
         this.workloadProcessing = true;
-
-        ////console.log("workload", workload);
         this.threads = produce(this.threads, (draft) => {
             const threadKeys = Object.keys(workload);
             const threadQueues = workload;
@@ -259,15 +249,12 @@ class CreativeKernel {
                     }
                     if (unit.type === "worker") {
                         // check if worker receiver in registry
-
                         const receiver = this.registry.find((item) => {
                             return item.instance_id === unit.receiver.instance_id
                                 && item.resource_id === unit.receiver.resource_id
                                 && item.modality === unit.receiver.modality;
                         });
                         if (!receiver) {
-                            // check if receiver already queued
-                            //////console.log("queuedReceivers", this.queuedReceivers);
                             const queuedReceiver = this.queuedReceivers.find((item) => {
                                 return item.instance_id === unit.receiver.instance_id
                                     && item.resource_id === unit.receiver.resource_id
@@ -296,7 +283,24 @@ class CreativeKernel {
         })
         ////console.log("workload", this.threads);
         await this.run();
+        let mergedWorkload = {};
+        while (this.pendingWorkloads.length > 0) {
+            //console.log(this.pendingWorkloads.length)
+            const nextWorkload = this.pendingWorkloads[0];
+            if (nextWorkload) {
+                const mergedWorkloadKeys = Object.keys(mergedWorkload);
+                for (const key in nextWorkload) {
+                    if (mergedWorkloadKeys.includes(key)) {
+                        mergedWorkload[key].push(...nextWorkload[key]);
+                    } else {
+                        mergedWorkload[key] = nextWorkload[key];
+                    }
+                }
+            }
+            this.pendingWorkloads.shift();
+        }
         this.workloadProcessing = false;
+        await this.pushWorkload(mergedWorkload);
         this.notifySubscribers();
     }
 
@@ -328,12 +332,119 @@ class CreativeKernel {
                         delete draft[threadId];
                     }
                 });
+                // console.log(this.registry,unit)
+                const filteredRegistry = this.registry.filter((item) => {
+                    return item.instance_id !== unit.instance.instance_id
+                        || item.resource_id !== unit.instance.resource_id
+                        || item.modality !== unit.instance.modality;});
+                this.registry = filteredRegistry;
+                this.removeUnreachableUnits(unit.instance);
+                //this.addInstallUnits();
                 this.incrementalChange();
                 return;
             }
             throw new Error(`Error terminating unit ${unitIdx} in thread ${threadId}`);
         }
         throw new Error(`Unit ${unitIdx} is not a terminate unit`);
+    }
+
+    removeUnreachableUnits(instance) {
+        this.threads = produce(this.threads, (draft) => {
+            const threadKeys = Object.keys(draft);
+            const threadQueues = draft;
+            threadKeys.forEach((key) => {
+                const threadQueue = threadQueues[key];
+                // modify thread queue by queueing installs where needed
+                const newThreadQueue: CK_Unit[] = [];
+                threadQueue.forEach((unit: CK_Unit) => {
+                    if (unit.type === "blocker") {
+                        newThreadQueue.push(unit);
+                        return;
+                    }
+                    if (unit.type === "install") {
+                        newThreadQueue.push(unit);
+                        return;
+                    }
+                    if (unit.type === "worker") {
+                        // check if worker receiver in registry
+                        const meantForInstance = unit.receiver.instance_id === instance.instance_id
+                            && unit.receiver.resource_id === instance.resource_id
+                            && unit.receiver.modality === instance.modality;
+                        if (!meantForInstance) {
+                            newThreadQueue.push(unit);
+                            return;
+                        }
+                    }
+                    if (unit.type === "terminate") {
+                        newThreadQueue.push(unit);
+                        return;
+                    }
+                    throw new Error("Unknown unit type");
+                });
+                draft[key] = newThreadQueue;
+
+                if (draft[key].length === 0) {
+                    delete draft[key];
+                }
+            });
+        })
+
+    }
+
+    addInstallUnits() {
+        // console.log(this.queuedReceivers)
+        this.threads = produce(this.threads, (draft) => {
+            const threadKeys = Object.keys(draft);
+            const threadQueues = draft;
+            threadKeys.forEach((key) => {
+                const threadQueue = threadQueues[key];
+                // modify thread queue by queueing installs where needed
+                const newThreadQueue: CK_Unit[] = [];
+                threadQueue.forEach((unit: CK_Unit) => {
+                    if (unit.type === "blocker") {
+                        newThreadQueue.push(unit);
+                        return;
+                    }
+                    if (unit.type === "install") {
+                        newThreadQueue.push(unit);
+                        return;
+                    }
+                    if (unit.type === "worker") {
+                        // check if worker receiver in registry
+                        const receiver = this.registry.find((item) => {
+                            return item.instance_id === unit.receiver.instance_id
+                                && item.resource_id === unit.receiver.resource_id
+                                && item.modality === unit.receiver.modality;
+                        });
+                        // console.log(receiver)
+                        if (!receiver) {
+                            const queuedReceiver = this.queuedReceivers.find((item) => {
+                                return item.instance_id === unit.receiver.instance_id
+                                    && item.resource_id === unit.receiver.resource_id
+                                    && item.modality === unit.receiver.modality;
+                            });
+                            if (!queuedReceiver) {
+                                this.queuedReceivers.push({...unit.receiver});
+                                newThreadQueue.push({
+                                    type: "install",
+                                    instance: unit.receiver,
+                                    id: generateId(),
+                                })
+                            }
+                        }
+                        newThreadQueue.push(unit);
+                        return;
+                    }
+                    if (unit.type === "terminate") {
+                        newThreadQueue.push(unit);
+                        return;
+                    }
+                    throw new Error("Unknown unit type");
+                });
+                draft[key] = newThreadQueue;
+            });
+        })
+
     }
 
     incrementalChange() {
@@ -379,17 +490,12 @@ class CreativeKernel {
                         throw new Error("install Queued by modality")
                     }
                     if (unit.type === "worker") {
-                        // check if worker receiver in registry
-                        //////console.log(unit)
                         const receiver = this.registry.find((item) => {
                             return item.instance_id === unit.receiver.instance_id
                                 && item.resource_id === unit.receiver.resource_id
                                 && item.modality === unit.receiver.modality;
                         });
                         if (!receiver) {
-                            // check if receiver already queued
-                            //////console.log("queuedReceivers", this.queuedReceivers);
-
                             const queuedReceiver = this.queuedReceivers.find((item) => {
                                 return item.instance_id === unit.receiver.instance_id
                                     && item.resource_id === unit.receiver.resource_id
@@ -397,7 +503,7 @@ class CreativeKernel {
                             });
                             if (!queuedReceiver) {
                                 //console.log("queueing receiver", unit.receiver.instance_id);
-                                this.queuedReceivers.push(unit.receiver);
+                                this.queuedReceivers.push({...unit.receiver});
                                 newThreadQueue.push({
                                     type: "install",
                                     instance: unit.receiver,
@@ -437,6 +543,7 @@ class CreativeKernel {
         if (!this._running) {
             return;
         }
+        console.log(this.threads)
         const firstUnits = Object.keys(this.threads).map((key) => {
             const thread = this.threads[key];
             if (thread) {
@@ -444,7 +551,9 @@ class CreativeKernel {
             }
             return null;
         }).filter((value) => value !== null) as [threadId: string, unit: CK_Unit][];
+        console.log("firstUnits", firstUnits);
         const eligibleUnits = firstUnits.filter(([threadId,unit]) => {
+            console.log(unit);
             if (unit.type === "install") return true;
             if (unit.type === "blocker") return false;
             if (unit.type === "terminate") return true;

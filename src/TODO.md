@@ -16,4 +16,13 @@ Queue needs to be turned into a stack.
 
 
 
-- Debug EditingArea Plugin
+# LAUNCH CHECKLIST
+- Zoom & Pan Bug (Editing Area) DONE
+- Resize handle bug (Panels) DONE
+- Terminate Panels, and split panels gracefully 
+- Click to select (Editing Area)
+- Create new signal simplification (Signals)
+- Remove derive signal
+- Add easing controls
+- Add pretty load screen
+- Move p5sketch to seperate data store

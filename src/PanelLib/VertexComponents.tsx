@@ -32,19 +32,19 @@ function getSnapshot() {
 }
 
 const TreeContext = createContext<[Tree, (t: Tree) => void] | null>(null);
+const DraggingContext = createContext<[boolean, string | null, (b: boolean) => void, (s: string) => void] | null>(null);
 const TreeComponent: React.FC = () => {
 
 
 
     const {tree,renderId} = useSyncExternalStore(subscribe, getSnapshot);
+    const [dragging, setDragging] = useState(false);
+    const [draggingId, setDraggingId] = useState<string | null>(null);
 
     useEffect(() => {
         // console.log("TreeComponent mounted");
         globalThis.UI_MODALITY.rendered();
     })
-
-
-    // const [tree, setTree] = useState<Tree>(defaultTree()[0]);
 
     // setDebug();
 
@@ -53,18 +53,26 @@ const TreeComponent: React.FC = () => {
         return <div>No root found</div>;
     }
 
-    if (root.type === "b") {
-        return <TreeContext.Provider value={[tree, setTree]}>
-            <VertexBComponent id={root.id} key={root.id} />
+    return (<div
+    style={{
+        width: "100%",
+        height: "100%",
+        userSelect: dragging ? "none" : "auto",
+    }}
+    onMouseUp={() => setDragging(false)}
+    >
+        <TreeContext.Provider value={[tree, setTree]}>
+            <DraggingContext.Provider value={[dragging, draggingId, setDragging, setDraggingId]}>
+            {   root.type === "b" ?
+                <VertexBComponent id={root.id} key={root.id} />
+                : root.type === "c" ?
+                <VertexCComponent id={root.id} key={root.id} />
+                : <></>
+            }
+            </DraggingContext.Provider>
         </TreeContext.Provider>
-    }
-    if (root.type === "c") {
-        return <TreeContext.Provider value={[tree, setTree]}>
+    </div>);
 
-            <VertexCComponent id={root.id} key={root.id} />
-
-        </TreeContext.Provider>
-    }
 }
 
 const VertexBComponent: React.FC<{ id: string }> = ({ id }) => {
@@ -101,17 +109,23 @@ const VertexBComponent: React.FC<{ id: string }> = ({ id }) => {
             splitRow={splitRow}
             splitColumn={splitColumn}
             closePanel={closePanel}
+            parentId={vertex.parentId}
         />
     );
 }
 
 const VertexCComponent: React.FC<{ id: string }> = ({ id }) => {
 
-    const [dragging, setDragging] = useState(false);
+    const [dragging, draggingId, setDragging, setDraggingId] = useContext(DraggingContext)!;
+
+    const localDragging = (draggingId === id) && dragging;
+    const setLocalDragging = (b: boolean) => {
+        setDragging(b);
+        setDraggingId(id);
+    }
 
     const ref = React.useRef<HTMLDivElement>(null);
 
-    ////////console.log("dragging", dragging);
 
     const [tree, setTree] = useContext(TreeContext)!;
     const vertex = tree[id] as VertexC;
@@ -129,11 +143,11 @@ const VertexCComponent: React.FC<{ id: string }> = ({ id }) => {
         const v = tree[childId];
         if (v.type === "b") {
             return <div style={{pointerEvents: dragging ? "none" : "auto"}}>
-                <VertexBComponent key={childId} id={childId} dragging={dragging} />
+                <VertexBComponent key={childId} id={childId} />
             </div>;
         }
         if (v.type === "c") {
-            return <div style={{pointerEvents: dragging ? "none" : "auto"}}>
+            return <div>
                 <VertexCComponent key={childId} id={childId} />
             </div>;
         }
@@ -142,6 +156,7 @@ const VertexCComponent: React.FC<{ id: string }> = ({ id }) => {
 
     const sepWidth = 8;
     const expr = `calc(${percentage * 100}% - ${sepWidth / 2}px) ${sepWidth}px calc(${100 - percentage * 100}% - ${sepWidth / 2}px)`;
+    // console.log(id,"localDragging",localDragging, "dragging", dragging);
 
     return (
         <div style={{
@@ -156,7 +171,7 @@ const VertexCComponent: React.FC<{ id: string }> = ({ id }) => {
         }}
             onMouseMove={(event) => {
                 //console.log("mouse move", dragging, id);
-                if (!dragging) {
+                if (!localDragging) {
                     return;
                 }
                 if (!ref.current) {
@@ -170,15 +185,10 @@ const VertexCComponent: React.FC<{ id: string }> = ({ id }) => {
                 //console.log("new tree");
                 setTree(newTree);
             }}
-            onMouseUp={() => {
-                setDragging(false);
-                // ////////console.log("mouse up")
-            }}
-
             ref={ref}
         >
             {renderChild(children[0])}
-            <Separator direction={direction} setDragging={setDragging} dragging={dragging} />
+            <Separator direction={direction} setDragging={setLocalDragging} dragging={localDragging} />
             {renderChild(children[1])}
         </div>
     );
@@ -186,6 +196,8 @@ const VertexCComponent: React.FC<{ id: string }> = ({ id }) => {
 
 const Separator: React.FC<{direction: string, setDragging: (b: boolean) => void, dragging: boolean }> = ({direction, setDragging, dragging}) => {
     const [hover, setHover] = useState(false);
+    const displayBar = dragging ? true : hover ? true : false;
+    // console.log(displayBar, "hover", hover, "dragging", dragging);
 
     return (
         <div style={{
@@ -206,7 +218,7 @@ const Separator: React.FC<{direction: string, setDragging: (b: boolean) => void,
         }}
         >
             <div style={{
-                backgroundColor: hover || dragging ? "white" : "transparent",
+                backgroundColor: displayBar ? "white" : "transparent",
                 width: "100%",
                 height: "100%",
                 borderRadius: "5px",

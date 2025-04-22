@@ -16,6 +16,7 @@ function Unit ({ unit, id }: { unit: any, id: string }) {
 
     const installable = unit.type === "install";
     const computable = unit.type === "worker" && kernel.checkIfUnitReady(threadId, unit.id);
+    const terminatable = unit.type === "terminate";
 
     const doAction = async () => {
         if (installable) {
@@ -24,6 +25,10 @@ function Unit ({ unit, id }: { unit: any, id: string }) {
         }
         if (computable) {
             await kernel.computeUnit(threadId, unit.id);
+        }
+        if (terminatable) {
+            await kernel.terminateUnit(threadId, unit.id);
+            setSelectedUnit(null);
         }
     }
 
@@ -34,7 +39,7 @@ function Unit ({ unit, id }: { unit: any, id: string }) {
         width: "50px",
         height: "50px",
         borderRadius: "50%",
-        backgroundColor: unit.type === "install" ? "orange" : unit.type === "worker" ? "lightblue" : unit.type === "blocker" ? "gray" : "gray",
+        backgroundColor: unit.type === "install" ? "orange" : unit.type === "worker" ? "lightblue" : unit.type === "blocker" ? "gray" : unit.type === "terminate" ? "red" : "gray",
         cursor: "pointer",
         display: "flex",
         justifyContent: "center",
@@ -45,7 +50,7 @@ function Unit ({ unit, id }: { unit: any, id: string }) {
             onMouseEnter={() => {setHover(true); setSelected()}}
             onMouseLeave={() => setHover(false)}
         >
-            {(installable || computable) && 
+            {(installable || computable || terminatable) && 
             <div style={{
                 width: "50%",
                 height: "50%",
@@ -149,8 +154,13 @@ function UnitInspector() {
                     </div>
                 </div>
             }
-                        {
+            {
                 unit.type === "install" && <div>
+                    <div>Instance: {`${unit.instance.instance_id} [${unit.instance.modality}]`}</div>
+                </div>
+            }
+            {
+                unit.type === "terminate" && <div>
                     <div>Instance: {`${unit.instance.instance_id} [${unit.instance.modality}]`}</div>
                 </div>
             }

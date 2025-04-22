@@ -20,10 +20,10 @@ class PersistenceModality implements CK_Modality {
     }
 
     async terminateUnit(unit: CK_TerminateUnit): Promise<boolean> {
-        return true; 
+        return true;
     }
 
-    session : CK_WorkerUnit[] = [];
+    session: CK_WorkerUnit[] = [];
     async computeUnit(unit: CK_WorkerUnit): Promise<{ [threadId: string]: CK_Unit[] }> {
         const { payload, sender } = unit;
         const { SAVE_SESSION, key, state } = payload;
@@ -49,7 +49,7 @@ class PersistenceModality implements CK_Modality {
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement("a");
                 a.href = url;
-                a.download = "session.json";
+                a.download = `${this.projectName}.json`;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
@@ -60,15 +60,17 @@ class PersistenceModality implements CK_Modality {
         return {};
     }
 
+    projectName: string = "default";
     keys: string[] = [];
-    async saveSession() {
+    async saveSession(projectName: string) {
+        this.projectName = projectName;
         this.session = [];
         const registry = this.kernel?.getRegistry();
         if (!registry) {
             return;
         }
         const persistentInstances = registry.filter(
-            (instance) => instance.metadata? instance.metadata.persistent : false
+            (instance) => instance.metadata ? instance.metadata.persistent : false
         )
 
         await this.kernel?.pushWorkload({
@@ -99,59 +101,40 @@ class PersistenceModality implements CK_Modality {
     async loadSession() {
         // upload session as file
         const input = document.createElement("input");
-        input.type = "file";
-        input.accept = ".json";
-        input.onchange = async (event) => {
-            const file = (event.target as HTMLInputElement).files?.[0];
-            if (!file) {
-                return;
-            }
-            const reader = new FileReader();
-            reader.onload = async (event) => {
-                const text = event.target?.result as string;
-                const session = JSON.parse(text);
-                const registry = this.kernel?.getRegistry();
-                if (!registry) {
+        await new Promise((resolve) => {
+            input.type = "file";
+            input.accept = ".json";
+            input.onchange = async (event) => {
+                const file = (event.target as HTMLInputElement).files?.[0];
+                if (!file) {
                     return;
                 }
-                const persistentInstances = registry.filter(
-                    (instance) => instance.metadata? instance.metadata.persistent : false
-                )
-                // merge the session with the hello messages
-                // use the hello messages as placeholders for persistent instances that 
-                // are not in the session
-                // const completeSession = persistentInstances.map((instance) => {
-                //     const unit = session.find((unit: CK_WorkerUnit) => {
-                //         return unit.receiver.instance_id === instance.instance_id &&
-                //             unit.receiver.resource_id === instance.resource_id;
-                //     });
-                //     if (unit) {
-                //         return unit;
-                //     }
-                //     return {
-                //         type: "worker",
-                //         sender: {
-                //             instance_id: "persistence",
-                //             resource_id: "persistence",
-                //             modality: "persistence",
-                //         },
-                //         receiver: instance,
-                //         payload: {
-                //             LOAD_SESSION: true,
-                //         }
-                //     }
-                // });
-                // console.log("completeSession", completeSession);
-
-                await this.kernel?.pushWorkload({
-                    persistence: session
-                });
-                this.session = [];
-                this.keys = [];
+                const reader = new FileReader();
+                reader.onload = async (event) => {
+                    const text = event.target?.result as string;
+                    const session = JSON.parse(text);
+                    const registry = this.kernel?.getRegistry();
+                    if (!registry) {
+                        return;
+                    }
+                    const persistentInstances = registry.filter(
+                        (instance) => instance.metadata ? instance.metadata.persistent : false
+                    )
+                    await this.kernel?.pushWorkload({
+                        persistence: session
+                    });
+                    this.session = [];
+                    this.keys = [];
+                    resolve();
+                }
+                reader.readAsText(file);
             }
-            reader.readAsText(file);
-        }
-        input.click();
+            input.click();
+        });
+        let fileName = input.files?.[0]?.name;
+        // remove .json
+        fileName = fileName?.replace(".json", "");
+        return fileName;
     }
 }
 

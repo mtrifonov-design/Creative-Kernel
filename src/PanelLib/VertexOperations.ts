@@ -1,5 +1,5 @@
 import { produce } from "immer";
-import { Tree, VertexB, VertexC } from "./types";
+import { Tree, VertexB,Vertex, VertexC } from "./types";
 
 const LEFT = "leftId";
 const RIGHT = "rightId";
@@ -8,6 +8,26 @@ let DEBUG = false;
 
 function setDebug() {
     DEBUG = true;
+}
+
+function findChild(tree: Tree, startingVertexId?: string, searchingVertexId: string) : boolean {
+    let startingVertex;
+    console.log(tree, startingVertexId, searchingVertexId);
+
+    if (startingVertexId !== undefined) {
+        startingVertex = tree[startingVertexId] as Vertex;
+    } else {
+        startingVertex = Object.values(tree).find((v) => v.root);
+    }
+
+    if (startingVertex.type === "b") {
+        return startingVertex.id === searchingVertexId;
+    } else if (startingVertex.type === "c") {
+        const left = findChild(tree,startingVertex.children.leftId, searchingVertexId);
+        const right = findChild(tree,startingVertex.children.rightId, searchingVertexId);
+        return left || right;
+    }
+    return false;
 }
 
 function appendVertexB(tree: Tree,inhabited: boolean): [Tree, string] {
@@ -86,7 +106,7 @@ function generateId(): string {
 }
 
 function split(tree: Tree, vertexId: string, direction: string): Tree {
-    const v = tree[vertexId];
+    const v = {...tree[vertexId]};
     if (v.type !== "b") {
         throw new Error("Vertex is not of the right type");
     }
@@ -101,6 +121,9 @@ function split(tree: Tree, vertexId: string, direction: string): Tree {
     const [t3,c] = appendVertexC(tree, l, r, direction);
     tree = t3;
     tree = overwriteVertex(tree, vertexId, c);
+    tree = produce(tree, (draft) => {
+        (draft[l] as VertexB).payload = v.payload;
+    })
 
     if (DEBUG) {
         ////////console.log("create", tree);
@@ -152,20 +175,26 @@ function close(tree: Tree, vertexId: string): Tree {
     if (parent.type !== "c") {
         throw new Error("Parent is not of the right type");
     }
-    let survivingSilbling;
+    let survivingSilblingId;
     if (parent.children.leftId === vertexId) {
-        survivingSilbling = parent.children.rightId;
+        survivingSilblingId = parent.children.rightId;
     } else if (parent.children.rightId === vertexId) {
-        survivingSilbling = parent.children.leftId;
+        survivingSilblingId = parent.children.leftId;
     } else {
         throw new Error("Vertex is not a child of the parent");
     }
 
-    tree = produce(tree, (draft) => {
+    const survivingSilbling = tree[survivingSilblingId];
+    const cloneOfSurvivingSilbling = {...survivingSilbling};
+
+    let [t1, newId] = appendVertexB(tree, false);
+    tree = produce(t1, (draft) => {
         delete draft[vertexId];
+        delete draft[survivingSilblingId];
+        (draft[newId] as VertexB).payload = cloneOfSurvivingSilbling.payload;
     });
 
-    tree = overwriteVertex(tree, v.parentId, survivingSilbling);
+    tree = overwriteVertex(tree, v.parentId, newId);
 
     if (DEBUG) {
         ////////console.log("close", tree);
@@ -185,4 +214,4 @@ function defaultTree(): [Tree, string] {
 
 
 
-export { split, close, defaultTree, setDebug, setPercentage, setPayload }
+export { split, close, defaultTree, setDebug, setPercentage, setPayload, findChild }

@@ -70,11 +70,12 @@ class IframeModality implements CK_Modality {
         }
         this.workloadReleaseScheduled = true;
         while (this.pendingWorkloads.length > 0) {
-            const workload = this.pendingWorkloads.shift();
-            if (workload) {
+            const nextWorkload = this.pendingWorkloads[0];
+            if (nextWorkload) {
                 const kernel = this.kernel;
                 if (kernel) {
-                    await kernel.pushWorkload(workload);
+                    await kernel.pushWorkload(nextWorkload);
+                    this.pendingWorkloads.shift();
                 }
             }
         }
@@ -93,7 +94,7 @@ class IframeModality implements CK_Modality {
         const { instance_id } = instance;
         const iframe = this.instances[instance_id];
         if (iframe) {
-            iframe.parentNode?.removeChild(iframe);
+            if (iframe.classList.contains("hidden_iframe")) iframe.parentNode?.removeChild(iframe);
             delete this.instances[instance_id];
             delete this.pw_id[this.id_pw[instance_id]];
             delete this.id_pw[instance_id];
@@ -111,10 +112,25 @@ class IframeModality implements CK_Modality {
         this.pw_id[pw] = instance_id;
         this.id_pw[instance_id] = pw;
         this.id_resource[instance_id] = resource_id;
+        // console.log(this.instances[instance_id])
+
         const iframe = this.instances[instance_id] || document.createElement('iframe');
+        
+
         this.instances[instance_id] = iframe;
         iframe.onload = (e) => {
             this.sendMessage(instance_id, { CK_INSTALL: true, pw: pw, instanceId: instance_id, resourceId: resource_id });        
+        }
+        if (!iframe.isConnected) {
+            iframe.style.display = "none";
+            iframe.style.width = "0px";
+            iframe.style.height = "0px";
+            iframe.style.border = "none";
+            iframe.style.position = "absolute";
+            iframe.style.zIndex = "-1";
+            iframe.style.pointerEvents = "none";
+            iframe.classList.add("hidden_iframe");
+            document.body.appendChild(iframe);
         }
         const metadata = await this.initializeIframe(instance_id, resource_id);
         return metadata;
