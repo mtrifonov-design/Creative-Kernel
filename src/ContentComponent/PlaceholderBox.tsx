@@ -14,7 +14,9 @@ function Option(p: {
     label: string;
 }) {
     return <div style={{
-        border: " 1px solid rgb(150, 150, 150)",
+        backgroundColor: "#2C333A",
+        color: "#C6D6E6",
+        fontFamily: "sans-serif",
         borderRadius: "5px",
         padding: "10px",
         fontSize: "20px",
@@ -32,7 +34,7 @@ function PlaceholderBox(p: {
     setAddress: (address: string) => void;
 }) {
     return <div style={{
-        backgroundColor: "rgb(240, 240, 240)",
+        backgroundColor: "#1D2126",
         width: "100%",
         height: "100%",
         display: "flex",

@@ -132,14 +132,19 @@ class UIModality implements CK_Modality {
         }
     }
 
-    terminateIframes(parentId?: string) {
+    terminateIframes(id?: string) {
         const markedForDeletion = []
-        // console.log("LIVE IFRAMES", this.liveIframes)
         const { tree } = this.treeManager.getTree();
-        console.log(JSON.stringify(tree,null,2));
-        console.log(this.liveIframes.length)
+        let parentId;
+        const v = tree[id];
+        if (v && v.parentId) {
+            parentId = v.parentId;
+        } else {
+            parentId = Object.values(tree).find((v) => v.root)?.id;
+        }
+
         this.liveIframes.forEach(ifr => {
-            console.log("IM RUNNING SOMEHOW",ifr)
+            // console.log("IM RUNNING SOMEHOW",ifr)
             const { vertexId, id, address, iframe } = ifr;
             const {tree} = this.treeManager.getTree();
             const child = findChild(tree, parentId, vertexId);

@@ -33,8 +33,9 @@ const SearchBar: React.FC<{
     return <input style={{
         width: "100%",
         backgroundColor: "transparent",
-        border: "1px solid rgb(180, 180, 180)",
+        border: "1px solid #3B434B",
         borderRadius: "5px",
+        color: "#C6D6E6"
     }}
         type="text" placeholder={address} ref={inputRef}
     />
@@ -73,21 +74,21 @@ const ContentComponent: React.FC<{
         const iframeId = generateId();
         globalThis.UI_MODALITY.setIframe(id, iframeId,address,ref.current)
         return () => {
-            globalThis.UI_MODALITY.terminateIframes(parentId);
+            globalThis.UI_MODALITY.terminateIframes(id);
         }
     }, [address]);
 
     const closeSelf = () => {
-        globalThis.UI_MODALITY.terminateIframes(parentId);
+        globalThis.UI_MODALITY.terminateIframes(id);
         closePanel();
     }
 
     const splitRowCommand = () => {
-        globalThis.UI_MODALITY.terminateIframes(parentId);
+        globalThis.UI_MODALITY.terminateIframes(id);
         splitRow();
     }
     const splitColumnCommand = () => {
-        globalThis.UI_MODALITY.terminateIframes(parentId);
+        globalThis.UI_MODALITY.terminateIframes(id);
         splitColumn();
     }
 
@@ -108,7 +109,7 @@ const ContentComponent: React.FC<{
             height: "100%",
         }}>
             <div style={{
-                backgroundColor: "rgb(230, 230, 230)",
+                backgroundColor: "#1D2126",
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
@@ -124,12 +125,15 @@ const ContentComponent: React.FC<{
                     flexDirection: "row",
                     justifyContent: "flex-end",
                     alignItems: "center",
+                    
                 }}>
                     <button
                         style={{
                             width: "18px",
                             height: "18px",
                             fontSize: "8px",
+                            backgroundColor: "#59646E",
+                            color:"#C6D6E6"
                         }}
                         onClick={splitRowCommand}>|</button>
                     <button
@@ -137,6 +141,8 @@ const ContentComponent: React.FC<{
                             width: "18px",
                             height: "18px",
                             fontSize: "8px",
+                            backgroundColor: "#59646E",
+                            color: "#C6D6E6"
                         }}
                         onClick={splitColumnCommand}>—</button>
                     <button
@@ -144,6 +150,8 @@ const ContentComponent: React.FC<{
                             width: "18px",
                             height: "18px",
                             fontSize: "8px",
+                            backgroundColor: "#59646E",
+                            color: "#C6D6E6"
                         }}
                         onClick={closeSelf}>X</button>
                 </div>

@@ -543,7 +543,7 @@ class CreativeKernel {
         if (!this._running) {
             return;
         }
-        console.log(this.threads)
+        //(this.threads)
         const firstUnits = Object.keys(this.threads).map((key) => {
             const thread = this.threads[key];
             if (thread) {
@@ -551,9 +551,9 @@ class CreativeKernel {
             }
             return null;
         }).filter((value) => value !== null) as [threadId: string, unit: CK_Unit][];
-        console.log("firstUnits", firstUnits);
+        ///console.log("firstUnits", firstUnits);
         const eligibleUnits = firstUnits.filter(([threadId,unit]) => {
-            console.log(unit);
+            // console.log(unit);
             if (unit.type === "install") return true;
             if (unit.type === "blocker") return false;
             if (unit.type === "terminate") return true;

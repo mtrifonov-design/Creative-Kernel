@@ -11,23 +11,33 @@ function setDebug() {
 }
 
 function findChild(tree: Tree, startingVertexId?: string, searchingVertexId: string) : boolean {
-    let startingVertex;
-    console.log(tree, startingVertexId, searchingVertexId);
-
-    if (startingVertexId !== undefined) {
-        startingVertex = tree[startingVertexId] as Vertex;
-    } else {
-        startingVertex = Object.values(tree).find((v) => v.root);
+    try {
+        let startingVertex;
+        if (startingVertexId !== undefined) {
+            startingVertex = tree[startingVertexId] as Vertex;
+            // console.log(JSON.stringify(tree,null,2))
+            // console.log(startingVertexId);
+        } else {
+            startingVertex = Object.values(tree).find((v) => v.root);
+        }
+        // console.log(JSON.stringify(startingVertex,null,2))
+    
+        if (startingVertex.type === "b") {
+            return startingVertex.id === searchingVertexId;
+        } else if (startingVertex.type === "c") {
+            const left = findChild(tree,startingVertex.children.leftId, searchingVertexId);
+            const right = findChild(tree,startingVertex.children.rightId, searchingVertexId);
+            return left || right;
+        }
+        return false;
+    } catch (e) {
+        console.error("Error in findChild", e);
+        console.error("Tree", tree);
+        console.error("Starting vertex id", startingVertexId);
+        console.error("Searching vertex id", searchingVertexId);
+        return false;
     }
 
-    if (startingVertex.type === "b") {
-        return startingVertex.id === searchingVertexId;
-    } else if (startingVertex.type === "c") {
-        const left = findChild(tree,startingVertex.children.leftId, searchingVertexId);
-        const right = findChild(tree,startingVertex.children.rightId, searchingVertexId);
-        return left || right;
-    }
-    return false;
 }
 
 function appendVertexB(tree: Tree,inhabited: boolean): [Tree, string] {
@@ -164,6 +174,7 @@ function setPayload(tree: Tree, vertexId: string, payload: any): Tree {
 }
 
 function close(tree: Tree, vertexId: string): Tree {
+    // console.log(JSON.stringify(tree,null,2))
     const v = tree[vertexId];
     if (v.type !== "b") {
         throw new Error("Vertex is not of the right type");
@@ -191,10 +202,19 @@ function close(tree: Tree, vertexId: string): Tree {
     tree = produce(t1, (draft) => {
         delete draft[vertexId];
         delete draft[survivingSilblingId];
-        (draft[newId] as VertexB).payload = cloneOfSurvivingSilbling.payload;
+        (draft[newId] as Vertex) = cloneOfSurvivingSilbling;
+        (draft[newId] as Vertex).id = newId;
+        if (cloneOfSurvivingSilbling.type === "c") {
+            const leftId = cloneOfSurvivingSilbling.children.leftId;
+            const rightId = cloneOfSurvivingSilbling.children.rightId;
+            draft[leftId].parentId = newId;
+            draft[rightId].parentId = newId;
+        }
     });
 
     tree = overwriteVertex(tree, v.parentId, newId);
+    // console.log(JSON.stringify(tree,null,2))
+
 
     if (DEBUG) {
         ////////console.log("close", tree);

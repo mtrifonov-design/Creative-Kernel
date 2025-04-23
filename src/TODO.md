@@ -19,10 +19,13 @@ Queue needs to be turned into a stack.
 # LAUNCH CHECKLIST
 - Zoom & Pan Bug (Editing Area) DONE
 - Resize handle bug (Panels) DONE
-- Terminate Panels, and split panels gracefully 
-- Click to select (Editing Area)
+- Add pretty load screen DONE
+- Terminate Panels, and split panels gracefully IN PROGRESS- TESTING
+- Click to select (Editing Area) IN PROGRESS- TESTING
+- Highlight segments on Selection (Editing area) DELAYED
 - Create new signal simplification (Signals)
 - Remove derive signal
 - Add easing controls
-- Add pretty load screen
+- Add cursors to editing area
+
 - Move p5sketch to seperate data store
