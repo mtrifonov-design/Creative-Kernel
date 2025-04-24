@@ -1,11 +1,10 @@
 import React, { createContext, useContext, useEffect, useState, useSyncExternalStore } from "react";
-import { Tree, VertexB, VertexC } from "./types";
+import { Tree, Vertex, VertexB, VertexC } from "./types";
 import { split, close, setPercentage, setPayload } from "./VertexOperations";
 import ContentComponent from "../ContentComponent/ContentComponent";
 
-function generateId() {
-    return Math.random().toString(36).substring(2, 15);
-}
+
+
 
 function setTree(tree: Tree) {
     const uiModality = globalThis.UI_MODALITY;
@@ -37,7 +36,7 @@ const TreeComponent: React.FC = () => {
 
 
 
-    const {tree,renderId} = useSyncExternalStore(subscribe, getSnapshot);
+    const { tree } = useSyncExternalStore(subscribe, getSnapshot);
     const [dragging, setDragging] = useState(false);
     const [draggingId, setDraggingId] = useState<string | null>(null);
 
@@ -48,7 +47,7 @@ const TreeComponent: React.FC = () => {
 
     // setDebug();
 
-    const root = Object.values(tree).find((v) => v.root);
+    const root : Vertex = (Object.values(tree) as Vertex[]).find((v : Vertex) => v.root)!;
     if (!root) {
         return <div>No root found</div>;
     }
@@ -157,7 +156,6 @@ const VertexCComponent: React.FC<{ id: string }> = ({ id }) => {
 
     const sepWidth = 8;
     const expr = `calc(${percentage * 100}% - ${sepWidth / 2}px) ${sepWidth}px calc(${100 - percentage * 100}% - ${sepWidth / 2}px)`;
-    // console.log(id,"localDragging",localDragging, "dragging", dragging);
 
     return (
         <div style={{
@@ -171,7 +169,6 @@ const VertexCComponent: React.FC<{ id: string }> = ({ id }) => {
             
         }}
             onMouseMove={(event) => {
-                //console.log("mouse move", dragging, id);
                 if (!localDragging) {
                     return;
                 }
@@ -183,7 +180,6 @@ const VertexCComponent: React.FC<{ id: string }> = ({ id }) => {
                 const y = (event.clientY - rect.top) / rect.height;
                 const newPercentage = direction === "row" ? x : y;
                 const newTree = setPercentage(tree, id, newPercentage);
-                //console.log("new tree");
                 setTree(newTree);
             }}
             ref={ref}
@@ -198,7 +194,6 @@ const VertexCComponent: React.FC<{ id: string }> = ({ id }) => {
 const Separator: React.FC<{direction: string, setDragging: (b: boolean) => void, dragging: boolean }> = ({direction, setDragging, dragging}) => {
     const [hover, setHover] = useState(false);
     const displayBar = dragging ? true : hover ? true : false;
-    // console.log(displayBar, "hover", hover, "dragging", dragging);
 
     return (
         <div style={{
@@ -208,13 +203,13 @@ const Separator: React.FC<{direction: string, setDragging: (b: boolean) => void,
             height: "100%",
             cursor: direction === "row" ? "ew-resize" : "ns-resize",
         }}
-        onMouseEnter={(e) => {
+        onMouseEnter={() => {
             setHover(true);
         }}
-        onMouseLeave={(e) => {
+        onMouseLeave={() => {
             setHover(false);
         }}
-        onMouseDown={(e) => {
+        onMouseDown={() => {
             setDragging(true);
         }}
         >

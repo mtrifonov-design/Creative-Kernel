@@ -4,6 +4,7 @@ import { defaultTree } from "./VertexOperations";
 
 class TreeManager {
     private tree: Tree;
+    private state: {tree: Tree, renderId: string};
 
     constructor() {
         this.tree = defaultTree()[0];
@@ -25,8 +26,8 @@ class TreeManager {
         return this.state;
     }
 
-    subscribers : Function[] = [];
-    subscribe(callback: Function) {
+    subscribers : (() => void)[] = [];
+    subscribe(callback: () => void) {
         this.subscribers.push(callback);
         return () => {
             this.subscribers = this.subscribers.filter((cb) => cb !== callback);
