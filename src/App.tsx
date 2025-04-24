@@ -9,7 +9,7 @@ import UIModality from './modalities/UIModality';
 import PersistenceModality from './modalities/PersistenceModality';
 
 
-const DEBUG = false;
+const DEBUG = true;
 
 
 const iframeModality = new IframeModality();

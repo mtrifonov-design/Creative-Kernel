@@ -220,6 +220,7 @@ class CreativeKernel {
     public async pushWorkload(workload: {
         [threadId: string]: CK_Unit[];
     }) {
+        //console.log(workload)
         if (Object.keys(workload).length === 0) return;
         if (this.workloadProcessing) {
             //console.log("Workload processing, pushing workload to queue");
@@ -460,6 +461,7 @@ class CreativeKernel {
         }
         const unitIdx = this.threads[threadId].findIndex((unit) => unit.id === unitId);
         const unit = this.threads[threadId][unitIdx] as CK_WorkerUnit;
+        // console.log(unit)
         const modality = this.modalities[unit.receiver.modality];
         if (!modality) {
             throw new Error(`Modality ${unit.receiver.modality} not found`);

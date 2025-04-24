@@ -8,7 +8,7 @@ const generatePw = () => {
 const MAX_TIMEOUT = 5000;
 class IframeModality implements CK_Modality {
     sendMessage(id: string, message: any) {
-        
+
         const iframe = this.instances[id];
         //post message
         //console.log("sendMessage", id, message, iframe);
@@ -104,7 +104,7 @@ class IframeModality implements CK_Modality {
     }
 
 
-    async installUnit(unit: CK_InstallUnit): Promise<false | { [key:string] : any }> {
+    async installUnit(unit: CK_InstallUnit): Promise<false | { [key: string]: any }> {
         //console.log("installUnit", unit);
         const { instance } = unit;
         const { instance_id, resource_id } = instance;
@@ -115,11 +115,11 @@ class IframeModality implements CK_Modality {
         // console.log(this.instances[instance_id])
 
         const iframe = this.instances[instance_id] || document.createElement('iframe');
-        
+
 
         this.instances[instance_id] = iframe;
         iframe.onload = (e) => {
-            this.sendMessage(instance_id, { CK_INSTALL: true, pw: pw, instanceId: instance_id, resourceId: resource_id });        
+            this.sendMessage(instance_id, { CK_INSTALL: true, pw: pw, instanceId: instance_id, resourceId: resource_id });
         }
         if (!iframe.isConnected) {
             iframe.style.display = "none";
@@ -140,21 +140,21 @@ class IframeModality implements CK_Modality {
         const pw = this.id_pw[id];
         const iframe = this.instances[id];
         const metadata = await new Promise((resolve) => {
-        const listener = (event) => {
-            if (event.data.type === 'ck-message'
-                && event.data.payload.pw === pw
-                && event.data.payload.CK_INSTALL === true
-            ) {
-                window.removeEventListener('message', listener);
-                resolve(event.data.payload.metadata);
+            const listener = (event) => {
+                if (event.data.type === 'ck-message'
+                    && event.data.payload.pw === pw
+                    && event.data.payload.CK_INSTALL === true
+                ) {
+                    window.removeEventListener('message', listener);
+                    resolve(event.data.payload.metadata);
+                }
             }
-        }
-        window.addEventListener('message', listener);
-        iframe.src = src;
-        setTimeout(() => {
-            window.removeEventListener('message', listener);
-            resolve(false);
-        }, MAX_TIMEOUT);
+            window.addEventListener('message', listener);
+            iframe.src = src;
+            setTimeout(() => {
+                window.removeEventListener('message', listener);
+                resolve(false);
+            }, MAX_TIMEOUT);
         });
         return metadata as any;
     }
