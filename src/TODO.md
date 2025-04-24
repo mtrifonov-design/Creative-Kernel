@@ -20,12 +20,21 @@ Queue needs to be turned into a stack.
 - Zoom & Pan Bug (Editing Area) DONE
 - Resize handle bug (Panels) DONE
 - Add pretty load screen DONE
+- Create new signal simplification (Signals) DONE.
+- Remove derive signal DONE
+- Add easing controls DONE
+- Add cursors to editing area DONE
+- Move p5sketch to seperate data store - DONE
+- Add Pin Bug - DONE
+
 - Terminate Panels, and split panels gracefully IN PROGRESS- TESTING
 - Click to select (Editing Area) IN PROGRESS- TESTING
-- Highlight segments on Selection (Editing area) DELAYED
-- Create new signal simplification (Signals)
-- Remove derive signal
-- Add easing controls
-- Add cursors to editing area
+- Tree Bug IN PROGRESS - TESTING
 
-- Move p5sketch to seperate data store
+- Changing Panel Functionality
+
+
+
+___
+
+- Highlight segments on Selection (Editing area) DELAYED

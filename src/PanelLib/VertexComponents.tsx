@@ -141,15 +141,15 @@ const VertexCComponent: React.FC<{ id: string }> = ({ id }) => {
 
     const renderChild = (childId: string) => {
         const v = tree[childId];
-        const parentId = v.parentId;
+        // const parentId = v.parentId;
         if (v.type === "b") {
             return <div style={{pointerEvents: dragging ? "none" : "auto"}}>
-                <VertexBComponent key={childId+parentId} id={childId} />
+                <VertexBComponent key={childId} id={childId} />
             </div>;
         }
         if (v.type === "c") {
             return <div>
-                <VertexCComponent key={childId+parentId} id={childId} />
+                <VertexCComponent key={childId} id={childId} />
             </div>;
         }
         return null;

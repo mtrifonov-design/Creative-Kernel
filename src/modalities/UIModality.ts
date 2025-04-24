@@ -29,7 +29,7 @@ class UIModality implements CK_Modality {
     async computeUnit(unit: CK_WorkerUnit): Promise<{ [threadId: string]: CK_Unit[] }> {
         this.computingUnit = true;
         const { payload } = unit;
-        const { tree, SAVE_SESSION, LOAD_SESSION, state, key } = payload;
+        const { tree, SAVE_SESSION, LOAD_SESSION, state, key, CONFIRM_TERMINATE_COMPLETED, terminate_completed_id } = payload;
         if (SAVE_SESSION) {
             this.computingUnit = false;
             return {
@@ -53,6 +53,15 @@ class UIModality implements CK_Modality {
             if (!state) return {};
             this.computingUnit = false;
             return this.constructSetTreeWorkload(state.tree);
+        } else if (CONFIRM_TERMINATE_COMPLETED) {
+            const { terminate_completed_id } = payload;
+            const callback = this.terminateCompletedCallbacks[terminate_completed_id];
+            if (callback) {
+                callback();
+                delete this.terminateCompletedCallbacks[terminate_completed_id];
+            }
+            this.computingUnit = false;
+            return {}
         } else {
             // console.log("tree");
             this.treeManager.setTree(tree);
@@ -132,22 +141,21 @@ class UIModality implements CK_Modality {
         }
     }
 
-    terminateIframes(id?: string) {
+    terminateCompletedCallbacks: { [id: string]: (() => void) } = {};
+    async terminateIframes(parentId?: string) {
         const markedForDeletion = []
         const { tree } = this.treeManager.getTree();
-        let parentId;
-        const v = tree[id];
-        if (v && v.parentId) {
-            parentId = v.parentId;
-        } else {
-            parentId = Object.values(tree).find((v) => v.root)?.id;
-        }
+        console.log(this.liveIframes)
+        console.log(parentId)
 
         this.liveIframes.forEach(ifr => {
-            // console.log("IM RUNNING SOMEHOW",ifr)
+
             const { vertexId, id, address, iframe } = ifr;
             const {tree} = this.treeManager.getTree();
             const child = findChild(tree, parentId, vertexId);
+            // console.log("Runing terminate on",ifr)
+            // console.log("Tree is",JSON.stringify(tree, null, 2));
+            // console.log("Finding child of",parentId, vertexId, child);
             const blocker_id = generateId();
             if (child) {
                 markedForDeletion.push({id,address});
@@ -232,11 +240,37 @@ class UIModality implements CK_Modality {
         // }) 
         // console.log("terminateIframe",this.computingUnit)
         // //await this.render();
+
+
+
+
         if (!this.computingUnit && this.pendingWorkload.length > 0) {
-            this.kernel?.pushWorkload({
-                ui: this.pendingWorkload,
-            });
-            this.pendingWorkload = [];
+            await new Promise((resolve) => {
+                const terminateCompletedId = generateId();
+                this.terminateCompletedCallbacks[terminateCompletedId] = () => {resolve(true)};
+                this.pendingWorkload.push({
+                    type: "worker",
+                    sender: {
+                        instance_id: "ui",
+                        resource_id: "ui",
+                        modality: "ui",
+                    },
+                    receiver: {
+                        instance_id: "ui",
+                        resource_id: "ui",
+                        modality: "ui",
+                    },
+                    payload: {
+                        CONFIRM_TERMINATE_COMPLETED: true,
+                        terminate_completed_id: terminateCompletedId
+                    },
+                    id: generateId(),
+                })
+                this.kernel?.pushWorkload({
+                    ui: this.pendingWorkload,
+                });
+                this.pendingWorkload = [];
+            })
         }
     }
 

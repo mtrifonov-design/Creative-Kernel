@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useEffect, useRef, useState } from "react";
+import React, { useLayoutEffect, useEffect, useRef, useState, useCallback } from "react";
 import { CK_Unit } from "../kernel/types";
 // import { getIframe } from "../iframe_manager";
 import PlaceholderBox from "./PlaceholderBox";
@@ -41,6 +41,36 @@ const SearchBar: React.FC<{
     />
 }
 
+function useIframeChannel(nodeId: string, address?: string) {
+    const frameRef = useRef<HTMLIFrameElement>(null);
+    const connected = useRef(false);
+    const iframeId = useRef<string>();
+  
+    useLayoutEffect(() => {
+      if (!address || !frameRef.current) return;
+  
+      // first (real) mount ➜ open
+      if (!connected.current) {
+        iframeId.current = generateId();
+        UI_MODALITY.setIframe(nodeId, iframeId.current, address, frameRef.current);
+        connected.current = true;
+      }
+      return () => {
+      };
+    }, [address]);
+  
+    /** Close with ACK and return only when peer confirms. */
+    const closeWithAck = useCallback(async (subtreeRootId: string) => {
+        console.log("closeWithAck", subtreeRootId,connected.current);
+      //if (!connected.current) return;
+      await UI_MODALITY.terminateIframes(subtreeRootId);
+      connected.current = false;
+    }, []);
+  
+    return { frameRef, closeWithAck };
+  }
+  
+
 const ContentComponent: React.FC<{
     id: string,
     parentId?: string,
@@ -56,39 +86,63 @@ const ContentComponent: React.FC<{
         address: undefined,
     }
 
+    //const unloaded = useRef(false);
     const address = payload !== undefined ? payload.address : undefined;
     const setAddress = (newAddress: string) => {
         setPayload({
             address: newAddress,
         });
     }
-    const ref = useRef<HTMLDivElement>(null);
-    const iframeIdRef = useRef<string>(generateId());
+    // const ref = useRef<HTMLDivElement>(null);
+    // const iframeIdRef = useRef<string>(generateId());
+    // useLayoutEffect(() => {
+    //     if (!address) {
+    //         return;
+    //     }
+    //     if (!ref.current) return;
+    //     iframeIdRef.current = generateId();
+    //     const iframeId = generateId();
+    //     globalThis.UI_MODALITY.setIframe(id, iframeId,address,ref.current)
+    //     return () => {
+    //         // if (!unloaded.current) {
+    //         globalThis.UI_MODALITY.terminateIframes(id);
+    //         // }
+    //     }
+    // }, [address]);
 
-    useLayoutEffect(() => {
-        if (!address) {
-            return;
-        }
-        if (!ref.current) return;
-        iframeIdRef.current = generateId();
-        const iframeId = generateId();
-        globalThis.UI_MODALITY.setIframe(id, iframeId,address,ref.current)
-        return () => {
-            globalThis.UI_MODALITY.terminateIframes(id);
-        }
-    }, [address]);
+    const { frameRef, closeWithAck } = useIframeChannel(id, address);
 
-    const closeSelf = () => {
-        globalThis.UI_MODALITY.terminateIframes(id);
+
+    const closeSelf = async () => {
+        const { tree } = globalThis.UI_MODALITY.treeManager.getTree();
+        let parentId;
+        const v = tree[id];
+        // console.log(v);
+        // console.log(JSON.stringify(tree,null,2))
+        if (v) {
+            if (v.parentId) {
+                parentId = v.parentId;
+            } else {
+                parentId = v.id;
+            }
+        }
+        await closeWithAck(parentId);
+        // globalThis.UI_MODALITY.terminateIframes(parentId);
+        //unloaded.current = true;
         closePanel();
     }
 
-    const splitRowCommand = () => {
-        globalThis.UI_MODALITY.terminateIframes(id);
+    const splitRowCommand = async () => {
+        await closeWithAck(id);
+        
+        //globalThis.UI_MODALITY.terminateIframes(id);
+        //unloaded.current = true;
         splitRow();
     }
-    const splitColumnCommand = () => {
-        globalThis.UI_MODALITY.terminateIframes(id);
+    const splitColumnCommand = async () => {
+        await closeWithAck(id);
+        // globalThis.UI_MODALITY.terminateIframes(id);
+        //unloaded.current = true;
         splitColumn();
     }
 
@@ -157,7 +211,7 @@ const ContentComponent: React.FC<{
                 </div>
             </div>
             {address ?
-                <iframe ref={ref}
+                <iframe ref={frameRef}
                     style={{
                         width: "100%",
                         height: "100%",

@@ -15,13 +15,10 @@ function findChild(tree: Tree, startingVertexId?: string, searchingVertexId: str
         let startingVertex;
         if (startingVertexId !== undefined) {
             startingVertex = tree[startingVertexId] as Vertex;
-            // console.log(JSON.stringify(tree,null,2))
-            // console.log(startingVertexId);
         } else {
             startingVertex = Object.values(tree).find((v) => v.root);
         }
-        // console.log(JSON.stringify(startingVertex,null,2))
-    
+
         if (startingVertex.type === "b") {
             return startingVertex.id === searchingVertexId;
         } else if (startingVertex.type === "c") {
@@ -37,7 +34,6 @@ function findChild(tree: Tree, startingVertexId?: string, searchingVertexId: str
         console.error("Searching vertex id", searchingVertexId);
         return false;
     }
-
 }
 
 function appendVertexB(tree: Tree,inhabited: boolean): [Tree, string] {
@@ -101,8 +97,10 @@ function overwriteVertex(tree: Tree, vertexId: string, newVertexId: string): Tre
 
             newVertex.parentId = parent.id;
         } else {
-
-            newVertex.root = true;
+            if (v.root) {
+                for (const node of Object.values(draft)) node.root = false;
+                newVertex.root = true;
+            }            
             newVertex.parentId = undefined;
         }
 
@@ -112,7 +110,7 @@ function overwriteVertex(tree: Tree, vertexId: string, newVertexId: string): Tre
 };
 
 function generateId(): string {
-    return Math.random().toString(36).substring(2, 15);
+    return crypto.randomUUID();
 }
 
 function split(tree: Tree, vertexId: string, direction: string): Tree {
@@ -136,7 +134,7 @@ function split(tree: Tree, vertexId: string, direction: string): Tree {
     })
 
     if (DEBUG) {
-        ////////console.log("create", tree);
+        assertTreeIntegrity(tree);
     }
 
     return tree;
@@ -154,7 +152,7 @@ function setPercentage(tree: Tree, vertexId: string, percentage: number): Tree {
         (draft[vertexId] as VertexC).percentage = percentage;
     });
     if (DEBUG) {
-        ////////console.log("setPercentage", tree);
+        assertTreeIntegrity(tree);
     }
     return tree;
 }
@@ -168,7 +166,7 @@ function setPayload(tree: Tree, vertexId: string, payload: any): Tree {
         (draft[vertexId] as VertexB).payload = payload;
     });
     if (DEBUG) {
-        ////////console.log("setPayload", tree);
+        assertTreeIntegrity(tree);
     }
     return tree;
 }
@@ -217,7 +215,7 @@ function close(tree: Tree, vertexId: string): Tree {
 
 
     if (DEBUG) {
-        ////////console.log("close", tree);
+        assertTreeIntegrity(tree);
     }
     return tree;
 }
@@ -231,6 +229,109 @@ function defaultTree(): [Tree, string] {
     return [tree, id];
 }
 
+/** Run only when DEBUG === true.  Throws on *any* structural violation. */
+function assertTreeIntegrity(tree: Tree): void {
+
+    console.log("Asserting tree integrity");
+    console.log(JSON.stringify(tree, null, 2));
+
+    // ---------- 1. Exactly one root ----------
+    const rootIds = Object.values(tree)
+        .filter(v => v.root === true)
+        .map(v => v.id);
+
+    if (rootIds.length !== 1) {
+        throw new Error(
+            `Tree integrity error: expected exactly one root, found ${rootIds.length} → [${rootIds.join(
+                ", "
+            )}]`
+        );
+    }
+    const rootId = rootIds[0];
+
+    // ---------- 2. DFS walk, checking bidirectional links ----------
+    const visited = new Set<string>();
+
+    const dfs = (id: string, parentId: string | undefined): void => {
+        const v = tree[id];
+        if (!v) {
+            throw new Error(`Tree integrity error: missing vertex “${id}”`);
+        }
+        if (visited.has(id)) {
+            throw new Error(`Tree integrity error: cycle detected at “${id}”`);
+        }
+        visited.add(id);
+
+        // parent pointer must agree with traversal
+        if (v.parentId !== parentId) {
+            throw new Error(
+                `Tree integrity error: vertex “${id}” claims parent “${v.parentId}”, but traversal parent is “${parentId}”`
+            );
+        }
+
+        switch (v.type) {
+            case "b": {
+                // leaf must NOT have children
+                if ((v as any).children !== undefined) {
+                    throw new Error(`Tree integrity error: leaf “${id}” owns children`);
+                }
+                break;
+            }
+
+            case "c": {
+                const { leftId, rightId } = v.children;
+
+                // children must exist …
+                if (!tree[leftId] || !tree[rightId]) {
+                    throw new Error(
+                        `Tree integrity error: internal node “${id}” points to non-existent child`
+                    );
+                }
+                // … and point back.
+                if (tree[leftId].parentId !== id) {
+                    throw new Error(
+                        `Tree integrity error: child “${leftId}” does not acknowledge parent “${id}”`
+                    );
+                }
+                if (tree[rightId].parentId !== id) {
+                    throw new Error(
+                        `Tree integrity error: child “${rightId}” does not acknowledge parent “${id}”`
+                    );
+                }
+
+                // percentage must lie in [0, 1]
+                const pct = v.percentage;
+                if (pct < 0 || pct > 1) {
+                    throw new Error(
+                        `Tree integrity error: internal node “${id}” has out-of-bounds percentage ${pct}`
+                    );
+                }
+
+                dfs(leftId, id);
+                dfs(rightId, id);
+                break;
+            }
+
+            default:
+                /* Exhaustiveness guarantee */
+                const _never: never = v;
+                throw new Error(`Unknown vertex type at “${id}”`);
+        }
+    };
+
+    dfs(rootId, undefined);
+
+    // ---------- 3. No orphans ----------
+    if (visited.size !== Object.keys(tree).length) {
+        const orphans = Object.keys(tree).filter(id => !visited.has(id));
+        throw new Error(
+            `Tree integrity error: found ${orphans.length} disconnected vertex/vertices → [${orphans.join(
+                ", "
+            )}]`
+        );
+    }
+    console.log("Tree integrity check passed");
+}
 
 
 

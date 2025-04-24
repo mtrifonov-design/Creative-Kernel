@@ -164,6 +164,16 @@ function UnitInspector() {
                     <div>Instance: {`${unit.instance.instance_id} [${unit.instance.modality}]`}</div>
                 </div>
             }
+                        {
+                unit.type === "blocker" && <div>
+                        <pre style={{
+                            backgroundColor: "#cccccc",
+                            padding: "5px",
+                        }}>
+                        {JSON.stringify(unit, null, 2)}
+                        </pre>
+                </div>
+            }
 
 
 
