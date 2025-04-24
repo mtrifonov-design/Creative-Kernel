@@ -1,5 +1,6 @@
 
-const base = "http://localhost:5174/"
+const production = true;
+const base = production ? "https://mtrifonov-design.github.io/pinsandcurves-panels/#" : "http://localhost:5174/#";
 const OPTIONS = {
     Editing: base+"editing",
     Code: base+"code",
