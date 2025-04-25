@@ -1,6 +1,6 @@
 import CreativeKernel from "../kernel/kernel";
 import { CK_InstallUnit, CK_Modality, CK_TerminateUnit, CK_Unit, CK_WorkerUnit } from "../kernel/types";
-
+import { TEMPLATES } from "../Persistence_Templates";
 
 function generateId() {
     return Math.random().toString(36).substring(2, 15);
@@ -96,6 +96,22 @@ class PersistenceModality implements CK_Modality {
                 }
             })
         });
+
+        // clear url parameters
+        const url = new URL(window.location.href);
+        url.searchParams.delete("template");
+        window.history.replaceState({}, document.title, url.toString());
+    }
+
+    async loadSessionFromTemplate(template: string) {
+        const session = JSON.parse(TEMPLATES[template]);
+        await this.kernel?.terminateAllInstances();
+        await this.kernel?.pushWorkload({
+            persistence: session
+        });
+        this.session = [];
+        this.keys = [];
+
     }
 
     async loadSession() {

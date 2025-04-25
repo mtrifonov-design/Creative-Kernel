@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { TreeComponent } from './PanelLib/VertexComponents';
 import './App.css';
 import CK_Debugger from './CK_Debugger/CK_Debugger';
@@ -33,6 +33,28 @@ globalThis.CREATIVE_KERNEL = kernel;
 globalThis.PERSISTENCE_MODALITY = persistenceModality;
 
 const App: React.FC = () => {
+
+
+    const guard = useRef(false);
+    useEffect(() => {
+        if (guard.current) {
+            return;
+        }
+        guard.current = true;
+        // parse the URL and get the parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const params = Object.fromEntries(urlParams.entries());
+        console.log(params);
+        // if template is set, load the template
+        if (params.template) {
+            const template = params.template;
+            if (template === "default") {
+                globalThis.PERSISTENCE_MODALITY.loadSessionFromTemplate("default");
+            }
+        }
+
+
+    },[])
 
     const [projectName, setProjectName] = React.useState("Project Name");
     return <div style={{

@@ -43,11 +43,37 @@ function PlaceholderBox(p: {
         alignItems: "center",
         flexDirection: "column",
         gap: "10px",
-    }}>{
-        Object.keys(OPTIONS).map((key) => {
-            return <Option key={key} label={key} setAddress={p.setAddress} />
-        })
-    }
+    }}>
+        <img src="/media/LOGO.svg"
+            style={{
+                width: "200px",
+            }}
+        />
+        <div style={{
+            color: "#C6D6E6",
+            fontFamily: "sans-serif",
+            fontSize: "16px",
+            marginTop: "10px",
+            marginBottom: "15px",
+        }}>
+
+        Welcome to Pins and Curves (beta)!<br></br>
+        Open any of the panels below to get started.
+        </div>
+        <div style={{
+            display: "flex",
+            flexDirection: "row",
+            gap: "10px",
+        }}>
+                {
+                Object.keys(OPTIONS).map((key) => {
+                    return <Option key={key} label={key} setAddress={p.setAddress} />
+                })
+            }
+
+        </div>
+
+
     </div>
 }
 
