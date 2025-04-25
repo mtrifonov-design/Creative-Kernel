@@ -6,5 +6,5 @@ const PRODUCTION = true;
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
-  base: PRODUCTION ? '/Creative-Kernel/' : '/',
+  base: PRODUCTION ? '/' : '/',
 })
