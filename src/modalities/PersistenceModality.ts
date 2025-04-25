@@ -120,6 +120,7 @@ class PersistenceModality implements CK_Modality {
                     const persistentInstances = registry.filter(
                         (instance) => instance.metadata ? instance.metadata.persistent : false
                     )
+                    await this.kernel?.terminateAllInstances();
                     await this.kernel?.pushWorkload({
                         persistence: session
                     });

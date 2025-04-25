@@ -453,6 +453,25 @@ class CreativeKernel {
         this.notifySubscribers();
     }
 
+   async terminateAllInstances() {
+        this.threads = {};
+        Promise.all(this.registry.map(async (instance) => {
+            const modality = this.modalities[instance.modality];
+            if (modality) {
+                await modality.terminateUnit({
+                    type: "terminate",
+                    instance: instance,
+                    id: generateId(),
+                })
+                return;
+            }
+        }));
+        this.registry = [];
+        this.queuedReceivers = [];
+        this.incrementalChange();
+        this.notifySubscribers();
+    }
+
 
     public async computeUnit(threadId: string, unitId: string) {
         const ready = this.checkIfUnitReady(threadId, unitId);

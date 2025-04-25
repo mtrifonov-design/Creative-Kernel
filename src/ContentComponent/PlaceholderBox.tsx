@@ -2,12 +2,12 @@
 const production = true;
 const base = production ? "https://mtrifonov-design.github.io/pinsandcurves-panels/#" : "http://localhost:5174/#";
 const OPTIONS = {
-    Editing: base+"editing",
-    Code: base+"code",
+    Timeline: base+"editing",
+    "Code Editor": base+"code",
     Signals: base+"signals",
-    P5: base+"p5",
-    Copilot: base+"copilot",
-    Assets: base+"assets",
+    "Preview": base+"p5",
+    // Copilot: base+"copilot",
+    // Assets: base+"assets",
 }
 
 function Option(p: {
