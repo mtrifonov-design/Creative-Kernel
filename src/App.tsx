@@ -34,6 +34,7 @@ globalThis.PERSISTENCE_MODALITY = persistenceModality;
 
 const App: React.FC = () => {
 
+    const [ready, setReady] = React.useState(false);
 
     const guard = useRef(false);
     useEffect(() => {
@@ -44,26 +45,37 @@ const App: React.FC = () => {
         // parse the URL and get the parameters
         const urlParams = new URLSearchParams(window.location.search);
         const params = Object.fromEntries(urlParams.entries());
-        console.log(params);
+
         // if template is set, load the template
         if (params.template) {
             const template = params.template;
             if (template === "default") {
-                globalThis.PERSISTENCE_MODALITY.loadSessionFromTemplate("default");
+                globalThis.PERSISTENCE_MODALITY.loadSessionFromTemplate("default").then(() => {
+                    setReady(true);
+                }).catch((e) => {
+                    console.error("Error loading template", e);
+                    setReady(true);
+                });
             }
+        } else {
+            setReady(true);
         }
 
 
-    },[])
+    }, [])
+
+    //console.log(ready)
 
     const [projectName, setProjectName] = React.useState("Project Name");
-    return <div style={{
-        height: "100%",
-        width: "100%",
-        display: "grid",
-        boxSizing: "border-box",
-        gridTemplateRows: DEBUG ? "30px 1fr 500px" : "30px 1fr",
-    }}>
+    return <>
+        <div style={{
+            height: "100%",
+            width: "100%",
+            display: "grid",
+            boxSizing: "border-box",
+            gridTemplateRows: DEBUG ? "30px 1fr 500px" : "30px 1fr",
+
+        }}>
 
 
             <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "center", gap: "5px" }}>
@@ -81,7 +93,22 @@ const App: React.FC = () => {
             </div>
             <TreeComponent />
             {DEBUG && <CK_Debugger />}
-    </div>
+        </div>
+        <div style={{
+            width: "100vw",
+            height: "100vh",
+            position: "absolute",
+            top: 0,
+            left: 0,
+            zIndex: ready ? -1000 : 1000,
+        }}
+            onPointerDown={(e) => {
+                if (!ready) {
+                    e.stopPropagation();   // optional: keep the event from bubbling
+                }
+            }}
+        ></div>
+    </>
 }
 export default App;
 
