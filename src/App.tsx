@@ -65,6 +65,14 @@ const App: React.FC = () => {
                     setReady(true);
                 });
             }
+            if (template === "cyberspaghetti") {
+                globalThis.PERSISTENCE_MODALITY.loadSessionFromTemplate("cyberspaghetti").then(() => {
+                    setReady(true);
+                }).catch((e) => {
+                    console.error("Error loading template", e);
+                    setReady(true);
+                });
+            }
         } else {
             setReady(true);
         }
