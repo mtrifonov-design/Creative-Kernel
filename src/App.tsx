@@ -73,6 +73,14 @@ const App: React.FC = () => {
                     setReady(true);
                 });
             }
+            if (template === "laserlinguine") {
+                globalThis.PERSISTENCE_MODALITY.loadSessionFromTemplate("laserlinguine").then(() => {
+                    setReady(true);
+                }).catch((e) => {
+                    console.error("Error loading template", e);
+                    setReady(true);
+                });
+            }
         } else {
             setReady(true);
         }
