@@ -1,5 +1,5 @@
 
-const production = true;
+const production = false;
 const base = production ? "https://mtrifonov-design.github.io/pinsandcurves-panels/#" : "http://localhost:5174/#";
 const OPTIONS = {
     Timeline: base+"editing",

@@ -373,8 +373,8 @@ class CreativeKernel {
                             && unit.receiver.modality === instance.modality;
                         if (!meantForInstance) {
                             newThreadQueue.push(unit);
-                            return;
                         }
+                        return;
                     }
                     if (unit.type === "terminate") {
                         newThreadQueue.push(unit);
@@ -565,6 +565,7 @@ class CreativeKernel {
             return;
         }
         //(this.threads)
+        this.resolveBlockerUnits();
         const firstUnits = Object.keys(this.threads).map((key) => {
             const thread = this.threads[key];
             if (thread) {
