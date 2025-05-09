@@ -5,9 +5,10 @@ const OPTIONS = {
     Timeline: base+"editing",
     "Code Editor": base+"code",
     Signals: base+"signals",
-    "Preview": base+"p5",
+    //"Preview": base+"p5",
     // Copilot: base+"copilot",
     // Assets: base+"assets",
+    "HTML Preview": base+"htmlpreview",
 }
 
 function Option(p: {

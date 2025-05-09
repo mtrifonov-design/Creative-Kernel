@@ -7,40 +7,6 @@ function generateId() {
     return Math.random().toString(36).substring(2, 15);
 }
 
-const SearchBar: React.FC<{
-    setAddress: (address: string) => void,
-    address: string,
-}> = ({ setAddress, address }) => {
-    const inputRef = useRef<HTMLInputElement>(null);
-    useEffect(() => {
-        const listener = (e: KeyboardEvent) => {
-            if (e.key === 'Enter') {
-                const newAddress = inputRef.current?.value;
-                setAddress(newAddress || 'NONE');
-            }
-        };
-        const handle = inputRef.current;
-        if (handle) {
-            handle.addEventListener('keydown', listener);
-        }
-        return () => {
-            if (handle) {
-                handle.removeEventListener('keydown', listener);
-            }
-        }
-    }, [setAddress]);
-
-    return <input style={{
-        width: "100%",
-        backgroundColor: "transparent",
-        border: "1px solid #3B434B",
-        borderRadius: "5px",
-        color: "#C6D6E6"
-    }}
-        type="text" placeholder={address} ref={inputRef}
-    />
-}
-
 function useIframeChannel(nodeId: string, address?: string) {
     const frameRef = useRef<HTMLIFrameElement>(null);
     const connected = useRef(false);
@@ -86,31 +52,15 @@ const ContentComponent: React.FC<{
         address: undefined,
     }
 
-    //const unloaded = useRef(false);
     const address = payload !== undefined ? payload.address : undefined;
     const setAddress = (newAddress: string) => {
         setPayload({
             address: newAddress,
         });
     }
-    // const ref = useRef<HTMLDivElement>(null);
-    // const iframeIdRef = useRef<string>(generateId());
-    // useLayoutEffect(() => {
-    //     if (!address) {
-    //         return;
-    //     }
-    //     if (!ref.current) return;
-    //     iframeIdRef.current = generateId();
-    //     const iframeId = generateId();
-    //     globalThis.UI_MODALITY.setIframe(id, iframeId,address,ref.current)
-    //     return () => {
-    //         // if (!unloaded.current) {
-    //         globalThis.UI_MODALITY.terminateIframes(id);
-    //         // }
-    //     }
-    // }, [address]);
 
     const { frameRef, closeWithAck } = useIframeChannel(id, address);
+
 
 
     const closeSelf = async () => {
@@ -153,7 +103,24 @@ const ContentComponent: React.FC<{
         overflow: "hidden",
         boxSizing: "border-box",
         padding: "2px",
-    }}>
+
+    }}
+        onDragOver={(e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = "move";
+        }}
+        onDragLeave={(e) => {}}
+        
+        onDrop={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const data = e.dataTransfer.getData("text/plain");
+            if (data) {
+                setAddress(data);
+            }
+        }}
+
+    >
         <div style={{
             borderRadius: "8px",
             overflow: "hidden",
@@ -161,23 +128,22 @@ const ContentComponent: React.FC<{
             gridTemplateRows: "25px 1fr",
             width: "100%",
             height: "100%",
+            border: "2px solid var(--gray2)"
         }}>
             <div style={{
-                backgroundColor: "#1D2126",
+                backgroundColor: "var(--gray2)",
                 display: "flex",
-                justifyContent: "space-between",
+                justifyContent: "flex-end",
                 alignItems: "center",
                 padding: "5px",
                 gap: "5px",
+
             }}>
-
-                <SearchBar setAddress={setAddress} address={address} key={address} />
-
                 <div style={{
                     display: "flex",
                     gap: "2px",
                     flexDirection: "row",
-                    justifyContent: "flex-end",
+                    justifyContent: "flex-start",
                     alignItems: "center",
                     
                 }}>
