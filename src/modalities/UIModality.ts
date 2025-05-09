@@ -114,6 +114,7 @@ class UIModality implements CK_Modality {
                 id: generateId(),
             })
         }
+        const vertex = this.treeManager.getTree().tree[vertexId];
         this.pendingWorkload.push({
             type: "worker",
             sender: {
@@ -128,6 +129,7 @@ class UIModality implements CK_Modality {
             },
             payload: {
                 INIT: true,
+                payload: vertex?.payload,
             },
             id: generateId(),
         })

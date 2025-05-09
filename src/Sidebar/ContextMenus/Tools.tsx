@@ -32,7 +32,9 @@ function Tool(p: {
         draggable={true}
         onDragStart={(e) => {
             console.log("dragstart", label);
-            e.dataTransfer?.setData("text/plain", address);
+            e.dataTransfer?.setData("application/json", JSON.stringify({
+                address: address,
+            }));
         }}
     >
         <div>{label}</div>

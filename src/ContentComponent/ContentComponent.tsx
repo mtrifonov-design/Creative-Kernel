@@ -53,9 +53,10 @@ const ContentComponent: React.FC<{
     }
 
     const address = payload !== undefined ? payload.address : undefined;
-    const setAddress = (newAddress: string) => {
+    const setAddress = (newAddress: string, assetId? : string) => {
         setPayload({
             address: newAddress,
+            assetId: assetId,
         });
     }
 
@@ -114,9 +115,12 @@ const ContentComponent: React.FC<{
         onDrop={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            const data = e.dataTransfer.getData("text/plain");
-            if (data) {
-                setAddress(data);
+            const data = e.dataTransfer.getData("application/json");
+            const parsedData = JSON.parse(data);
+            const { address, assetId } = parsedData;
+            console.log(parsedData)
+            if (address) {
+                setAddress(address, assetId);
             }
         }}
 

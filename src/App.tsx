@@ -7,8 +7,10 @@ import IframeModality from './modalities/IframeModality';
 import WasmJSModality from './modalities/WasmJSModality';
 import UIModality from './modalities/UIModality';
 import PersistenceModality from './modalities/PersistenceModality';
+import PrivilegedModality from './modalities/PrivilegedModality';
 import { Button, SimpleCommittedTextInput, StyleProvider } from '@mtrifonov-design/pinsandcurves-design';
 import Sidebar from './Sidebar';
+import AssetViewer from './Sidebar/ContextMenus/AssetViewer';
 
 const DEBUG = false;
 
@@ -17,20 +19,28 @@ const iframeModality = new IframeModality();
 const wasmJSModality = new WasmJSModality();
 const uiModality = new UIModality();
 const persistenceModality = new PersistenceModality();
+const privilegedModality = new PrivilegedModality();
+
 const kernel = new CreativeKernel({
     modalities: {
         iframe: iframeModality,
         wasmjs: wasmJSModality,
         ui: uiModality,
         persistence: persistenceModality,
+        privileged: privilegedModality,
     },
     snapshot: null,
 });
 kernel.setRunning(!DEBUG);
+privilegedModality.appendInstance('asset_viewer', (modality) => {
+    return new AssetViewer(modality);
+})
 
 globalThis.IFRAME_MODALITY = iframeModality;
+globalThis.ASSET_VIEWER = privilegedModality.instanceWorkers['asset_viewer'];
 globalThis.UI_MODALITY = uiModality;
 globalThis.CREATIVE_KERNEL = kernel;
+globalThis.PRIVILEGED_MODALITY = privilegedModality;
 globalThis.PERSISTENCE_MODALITY = persistenceModality;
 
 const App: React.FC = () => {
