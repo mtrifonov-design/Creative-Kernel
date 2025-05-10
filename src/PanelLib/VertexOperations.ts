@@ -164,6 +164,31 @@ function setPayload(tree: Tree, vertexId: string, payload: any): Tree {
     }
     tree = produce(tree, (draft) => {
         (draft[vertexId] as VertexB).payload = payload;
+        const newId = crypto.randomUUID();
+        const newVertex = draft[vertexId] as VertexB;
+        newVertex.id = newId;
+        if (newVertex.parentId) {
+            const parent = draft[newVertex.parentId];
+            if (parent.type !== "c") {
+                throw new Error("Parent is not of the right type");
+            }
+            let self;
+            if (parent.children.leftId === vertexId) {
+                self = LEFT;
+            } else if (parent.children.rightId === vertexId) {
+                self = RIGHT;
+            } else {
+                throw new Error("Vertex is not a child of the parent");
+            }
+            if (self === LEFT) {
+                parent.children.leftId = newId;
+
+            } else if (self === RIGHT) {
+                parent.children.rightId = newId;
+            } 
+        }
+        delete draft[vertexId];
+        draft[newId] = newVertex;
     });
     if (DEBUG) {
         assertTreeIntegrity(tree);
@@ -172,7 +197,7 @@ function setPayload(tree: Tree, vertexId: string, payload: any): Tree {
 }
 
 function close(tree: Tree, vertexId: string): Tree {
-    // console.log(JSON.stringify(tree,null,2))
+    // //console.log(JSON.stringify(tree,null,2))
     const v = tree[vertexId];
     if (v.type !== "b") {
         throw new Error("Vertex is not of the right type");
@@ -211,7 +236,7 @@ function close(tree: Tree, vertexId: string): Tree {
     });
 
     tree = overwriteVertex(tree, v.parentId, newId);
-    // console.log(JSON.stringify(tree,null,2))
+    // //console.log(JSON.stringify(tree,null,2))
 
 
     if (DEBUG) {
@@ -232,8 +257,8 @@ function defaultTree(): [Tree, string] {
 /** Run only when DEBUG === true.  Throws on *any* structural violation. */
 function assertTreeIntegrity(tree: Tree): void {
 
-    console.log("Asserting tree integrity");
-    console.log(JSON.stringify(tree, null, 2));
+    //console.log("Asserting tree integrity");
+    //console.log(JSON.stringify(tree, null, 2));
 
     // ---------- 1. Exactly one root ----------
     const rootIds = Object.values(tree)
@@ -330,7 +355,7 @@ function assertTreeIntegrity(tree: Tree): void {
             )}]`
         );
     }
-    console.log("Tree integrity check passed");
+    //console.log("Tree integrity check passed");
 }
 
 

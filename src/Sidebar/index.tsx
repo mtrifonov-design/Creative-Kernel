@@ -1,4 +1,4 @@
-import { Button, Icon } from "@mtrifonov-design/pinsandcurves-design";
+import { Button, Icon, Logo } from "@mtrifonov-design/pinsandcurves-design";
 import React from "react";
 import SessionContextMenu from "./ContextMenus/Session";
 import ToolContextMenu from "./ContextMenus/Tools";
@@ -17,8 +17,10 @@ function Badge(p: {
     selected?: boolean;
     onSelect: () => void;
 }) {
+    const { text } = p;
     const [hover, setHover] = React.useState(false);
-    return <div className="materialSymbols"
+    return <div 
+        className={text === "logo" ? undefined : "materialSymbols"}
         onMouseEnter={() => setHover(true)}
         onMouseLeave={() => setHover(false)}
         onClick={p.onSelect}
@@ -36,7 +38,12 @@ function Badge(p: {
             userSelect: "none",
         }}
     >
-        {p.text}
+        {text === "logo" ? <Logo style={{
+            width: "40px",
+            height: "40px",
+        }}
+        color={hover || p.selected ? "var(--gray1)" : "var(--gray6)"}
+        /> : text}
     </div>
 }
 
@@ -66,11 +73,11 @@ function PermanentSidebar(p: {
             gap: "10px",
 
         }}>
-        <Badge text="draft" selected={contextMenu === ContextMenu.Session} 
+        <Badge text="logo" selected={contextMenu === ContextMenu.Session} 
         onSelect={toggleContextMenu(ContextMenu.Session)}/>
         <Badge text="folder_open" selected={contextMenu === ContextMenu.Assets} 
         onSelect={toggleContextMenu(ContextMenu.Assets)} />
-        <Badge text="extension" selected={contextMenu === ContextMenu.Tools} 
+        <Badge text="apps" selected={contextMenu === ContextMenu.Tools} 
         onSelect={toggleContextMenu(ContextMenu.Tools)}/>
         </div>
     );

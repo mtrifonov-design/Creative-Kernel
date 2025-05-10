@@ -40,6 +40,7 @@ function Asset(p: {
 }) {
     const { assetId, assetMetadata } = p;
     const { name, type, preferredEditorAddress } = assetMetadata
+    const [draggingAsset, setDraggingAsset] = React.useState(false);
     return <div style={{
         width: "250px",
         height: "40px",
@@ -55,11 +56,16 @@ function Asset(p: {
     }}
         draggable={preferredEditorAddress ? true : false}
         onDragStart={(e) => {
+            setDraggingAsset(true);
             e.stopPropagation();
             e.dataTransfer.setData("application/json", JSON.stringify({
-                assetId: assetId,
+                assetMetadata,
                 address: preferredEditorAddress,
             }));
+        }}
+        onDragEnd={(e) => {
+            setDraggingAsset(false);
+            e.stopPropagation();
         }}
     >
         {name}
@@ -74,7 +80,7 @@ function AssetContextMenu(p: {}) {
 
     const index = useSyncExternalStore(assetViewer.subscribe.bind(assetViewer), assetViewer.getSnapshot.bind(assetViewer));
 
-    console.log("AssetContextMenu", index);
+    //console.log("AssetContextMenu", index);
 
     useLayoutEffect(() => {
         assetViewer.connect();
@@ -85,7 +91,7 @@ function AssetContextMenu(p: {}) {
 
     if (!index) {
         return <div style={{
-            width: "100%",
+            width: "300px",
             height: "100%",
             display: "flex",
             justifyContent: "center",
@@ -101,7 +107,7 @@ function AssetContextMenu(p: {}) {
 
 
     return <div style={{
-        width: "100%",
+        width: "300px",
         height: "100%",
         display: "flex",
         flexDirection: "column",
@@ -111,9 +117,9 @@ function AssetContextMenu(p: {}) {
         gap: "10px",
         color: "var(--gray6)",
     }}>
-        {Object.entries(index).map(([assetId, assetMetadata]) => {
+        {Object.keys(index).length !== 0 ? Object.entries(index).map(([assetId, assetMetadata]) => {
             return <Asset key={assetId} assetId={assetId} assetMetadata={assetMetadata} />
-        })}
+        }) : "No assets found"}
 
         
 

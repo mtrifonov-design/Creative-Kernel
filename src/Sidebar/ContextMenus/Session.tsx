@@ -45,7 +45,7 @@ function SessionContextMenu(p: {}) {
             text={"Import"}
             onClick={async () => {
                 const projectName = await globalThis.PERSISTENCE_MODALITY.loadSession()
-                console.log(projectName)
+                //console.log(projectName)
                 if (projectName) {
                     setProjectName(projectName);
                 }

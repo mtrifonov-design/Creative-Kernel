@@ -3,6 +3,7 @@ import { CK_InstallUnit, CK_Instance, CK_Modality, CK_TerminateUnit, CK_Unit, CK
 import TreeManager from "../PanelLib/TreeManager";
 import { Tree } from "../PanelLib/types";
 import { findChild } from "../PanelLib/VertexOperations";
+import { setPayload } from "../PanelLib/VertexOperations";
 
 function generateId() {
     return Math.random().toString(36).substring(2, 15);
@@ -19,7 +20,7 @@ class UIModality implements CK_Modality {
         this.treeManager = new TreeManager();
     }
 
-    async installUnit(unit: CK_InstallUnit): Promise<false | {[key:string]: any}> {
+    async installUnit(unit: CK_InstallUnit): Promise<false | { [key: string]: any }> {
         return {
             persistent: true,
         };
@@ -29,7 +30,31 @@ class UIModality implements CK_Modality {
     async computeUnit(unit: CK_WorkerUnit): Promise<{ [threadId: string]: CK_Unit[] }> {
         this.computingUnit = true;
         const { payload } = unit;
-        const { tree, SAVE_SESSION, LOAD_SESSION, state, key, CONFIRM_TERMINATE_COMPLETED, terminate_completed_id } = payload;
+        const { tree, SAVE_SESSION, LOAD_SESSION, state, key, CONFIRM_TERMINATE_COMPLETED, terminate_completed_id,
+            setVertexPayload
+        } = payload;
+
+        if (setVertexPayload) {
+            const { vertexId, payload } = setVertexPayload;
+            //console.log("setVertexPayload", vertexId, payload);
+            const { tree } = this.treeManager.getTree();
+            //console.log("tree", tree);
+            const existingPayload = tree[vertexId]?.payload;
+            const newTree = setPayload(tree, vertexId, { ...existingPayload, ...payload });
+            this.terminateIframes(vertexId,() => {
+                //console.log("newTree", newTree);
+                this.pendingWorkload.push(...this.constructSetTreeWorkload(newTree).ui);
+            });
+
+            this.computingUnit = false;
+            const pendingWorkload = this.pendingWorkload;
+            this.pendingWorkload = [];
+            return {
+                ui: pendingWorkload,
+            }
+        }
+
+
         if (SAVE_SESSION) {
             this.computingUnit = false;
             return {
@@ -54,6 +79,8 @@ class UIModality implements CK_Modality {
             this.computingUnit = false;
             return this.constructSetTreeWorkload(state.tree);
         } else if (CONFIRM_TERMINATE_COMPLETED) {
+            // console.log("CONFIRM_TERMINATE_COMPLETED", CONFIRM_TERMINATE_COMPLETED);
+            //console.log("CONFIRM_TERMINATE_COMPLETED", this.liveIframes);
             const { terminate_completed_id } = payload;
             const callback = this.terminateCompletedCallbacks[terminate_completed_id];
             if (callback) {
@@ -61,9 +88,16 @@ class UIModality implements CK_Modality {
                 delete this.terminateCompletedCallbacks[terminate_completed_id];
             }
             this.computingUnit = false;
+            if (this.pendingWorkload.length > 0) {
+                const pendingWorkload = this.pendingWorkload;
+                this.pendingWorkload = [];
+                return {
+                    ui: pendingWorkload,
+                }
+            }
             return {}
         } else {
-            // console.log("tree");
+            //console.log("tree",tree);
             this.treeManager.setTree(tree);
             await this.render();
             const pendingWorkload = this.pendingWorkload;
@@ -76,17 +110,17 @@ class UIModality implements CK_Modality {
 
     }
 
-    rendered : (() => void) = () => {};
+    rendered: (() => void) = () => { };
     async render() {
         return await new Promise((resolve) => {
-            const callback = () => {resolve()}
+            const callback = () => { resolve() }
             this.rendered = callback;
         });
     }
 
 
     async terminateUnit(unit: CK_TerminateUnit): Promise<boolean> {
-        return true; 
+        return true;
     }
 
 
@@ -129,12 +163,11 @@ class UIModality implements CK_Modality {
             },
             payload: {
                 INIT: true,
-                payload: vertex?.payload,
+                payload: { ...vertex?.payload, vertexId },
+
             },
             id: generateId(),
         })
-        // console.log("setiframe",this.computingUnit)
-        // //await this.render();
         if (!this.computingUnit) {
             this.kernel?.pushWorkload({
                 ui: this.pendingWorkload,
@@ -144,23 +177,23 @@ class UIModality implements CK_Modality {
     }
 
     terminateCompletedCallbacks: { [id: string]: (() => void) } = {};
-    async terminateIframes(parentId?: string) {
+    async terminateIframes(parentId?: string,cb?: Function) {
         const markedForDeletion = []
         const { tree } = this.treeManager.getTree();
-        console.log(this.liveIframes)
-        console.log(parentId)
+        //console.log(this.liveIframes)
+        //console.log(parentId)
 
         this.liveIframes.forEach(ifr => {
 
             const { vertexId, id, address, iframe } = ifr;
-            const {tree} = this.treeManager.getTree();
+            const { tree } = this.treeManager.getTree();
             const child = findChild(tree, parentId, vertexId);
-            // console.log("Runing terminate on",ifr)
-            // console.log("Tree is",JSON.stringify(tree, null, 2));
-            // console.log("Finding child of",parentId, vertexId, child);
+            // //console.log("Runing terminate on",ifr)
+            // //console.log("Tree is",JSON.stringify(tree, null, 2));
+            // //console.log("Finding child of",parentId, vertexId, child);
             const blocker_id = generateId();
             if (child) {
-                markedForDeletion.push({id,address});
+                markedForDeletion.push({ id, address });
                 this.pendingWorkload.push({
                     type: "worker",
                     sender: {
@@ -184,7 +217,7 @@ class UIModality implements CK_Modality {
                     blocker_id,
                     blocker_count: 2,
                     id: generateId(),
-                }) ;
+                });
                 this.pendingWorkload.push({
                     type: "terminate",
                     instance: {
@@ -193,7 +226,7 @@ class UIModality implements CK_Modality {
                         instance_id: id,
                     },
                     id: generateId(),
-                }) 
+                })
             }
         })
         this.liveIframes = this.liveIframes.filter((v) => {
@@ -201,79 +234,35 @@ class UIModality implements CK_Modality {
             const found = markedForDeletion.find((v) => v.id === id && v.address === address);
             return !found;
         });
-        // const existingIframe = this.liveIframes.find((v) => v.id === id && v.address === address);
-        // if (!existingIframe) return;
 
-        // this.liveIframes = this.liveIframes.filter((v) => v.id !== id && v.address !== address);
-        // const blocker_id = generateId();
-
-        // this.pendingWorkload.push({
-        //     type: "worker",
-        //     sender: {
-        //         instance_id: "ui",
-        //         resource_id: "ui",
-        //         modality: "ui",
-        //     },
-        //     receiver: {
-        //         modality: "iframe",
-        //         resource_id: address,
-        //         instance_id: id,
-        //     },
-        //     payload: {
-        //         TERMINATE: true,
-        //         blocker_id,
-        //     },
-        //     id: generateId(),
-        // });
-        // this.pendingWorkload.push({
-        //     type: "blocker",
-        //     blocker_id,
-        //     blocker_count: 2,
-        //     id: generateId(),
-        // })  
-        // this.pendingWorkload.push({
-        //     type: "terminate",
-        //     instance: {
-        //         modality: "iframe",
-        //         resource_id: address,
-        //         instance_id: id,
-        //     },
-        //     id: generateId(),
-        // }) 
-        // console.log("terminateIframe",this.computingUnit)
-        // //await this.render();
-
-
-
-
-        if (!this.computingUnit && this.pendingWorkload.length > 0) {
-            await new Promise((resolve) => {
-                const terminateCompletedId = generateId();
-                this.terminateCompletedCallbacks[terminateCompletedId] = () => {resolve(true)};
-                this.pendingWorkload.push({
-                    type: "worker",
-                    sender: {
-                        instance_id: "ui",
-                        resource_id: "ui",
-                        modality: "ui",
-                    },
-                    receiver: {
-                        instance_id: "ui",
-                        resource_id: "ui",
-                        modality: "ui",
-                    },
-                    payload: {
-                        CONFIRM_TERMINATE_COMPLETED: true,
-                        terminate_completed_id: terminateCompletedId
-                    },
-                    id: generateId(),
-                })
+        await new Promise((resolve) => {
+            const terminateCompletedId = generateId();
+            this.terminateCompletedCallbacks[terminateCompletedId] = () => { resolve(true);if (cb) cb(); };
+            this.pendingWorkload.push({
+                type: "worker",
+                sender: {
+                    instance_id: "ui",
+                    resource_id: "ui",
+                    modality: "ui",
+                },
+                receiver: {
+                    instance_id: "ui",
+                    resource_id: "ui",
+                    modality: "ui",
+                },
+                payload: {
+                    CONFIRM_TERMINATE_COMPLETED: true,
+                    terminate_completed_id: terminateCompletedId
+                },
+                id: generateId(),
+            })
+            if (!this.computingUnit && this.pendingWorkload.length > 0) {
                 this.kernel?.pushWorkload({
                     ui: this.pendingWorkload,
                 });
                 this.pendingWorkload = [];
-            })
-        }
+            }
+        })
     }
 
     constructDeps(tree: Tree) {
@@ -307,29 +296,29 @@ class UIModality implements CK_Modality {
         const workload = {
             ui: [
                 {
-                type: "worker",
-                sender: {
-                    instance_id: "ui",
-                    resource_id: "ui",
-                    modality: "ui",
-                },
-                receiver: {
-                    instance_id: "ui",
-                    resource_id: "ui",
-                    modality: "ui",
-                },
-                payload: {
-                    tree,
-                },
-                id: generateId(),
-            }]
+                    type: "worker",
+                    sender: {
+                        instance_id: "ui",
+                        resource_id: "ui",
+                        modality: "ui",
+                    },
+                    receiver: {
+                        instance_id: "ui",
+                        resource_id: "ui",
+                        modality: "ui",
+                    },
+                    payload: {
+                        tree,
+                    },
+                    id: generateId(),
+                }]
         }
         return workload;
     }
 
 
     inProgress: boolean = false;
-    pendingTrees : any[] = [];
+    pendingTrees: any[] = [];
     async setTree(tree: Tree) {
         this.pendingTrees.push(tree);
         if (this.inProgress) {
@@ -342,7 +331,7 @@ class UIModality implements CK_Modality {
                 const workload = this.constructSetTreeWorkload(nextTree);
                 await this.kernel?.pushWorkload(workload);
                 this.pendingTrees.shift();
-                /// console.log(this.pendingTrees.length);
+                /// //console.log(this.pendingTrees.length);
             }
         }
         this.inProgress = false;

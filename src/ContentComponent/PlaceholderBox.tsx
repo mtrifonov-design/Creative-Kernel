@@ -1,3 +1,4 @@
+import { Logo } from "@mtrifonov-design/pinsandcurves-design";
 
 const production = false;
 const base = production ? "https://mtrifonov-design.github.io/pinsandcurves-panels/#" : "http://localhost:5174/#";
@@ -36,7 +37,6 @@ function PlaceholderBox(p: {
     setAddress: (address: string) => void;
 }) {
     return <div style={{
-        backgroundColor: "#1D2126",
         width: "100%",
         height: "100%",
         display: "flex",
@@ -45,11 +45,10 @@ function PlaceholderBox(p: {
         flexDirection: "column",
         gap: "10px",
     }}>
-        <img src="/media/LOGO.svg"
-            style={{
-                width: "200px",
-            }}
-        />
+        {/* <Logo color={"var(--gray2)"} style={{
+            width: "200px",
+            height: "200px",
+        }} /> */}
         <div style={{
             color: "#C6D6E6",
             fontFamily: "sans-serif",
@@ -58,10 +57,10 @@ function PlaceholderBox(p: {
             marginBottom: "15px",
         }}>
 
-        Welcome to Pins and Curves (beta)!<br></br>
-        Open any of the panels below to get started.
+        {/* Welcome to Pins and Curves (beta)!<br></br>
+        Open any of the panels below to get started. */}
         </div>
-        <div style={{
+        {/* <div style={{
             display: "flex",
             flexDirection: "row",
             gap: "10px",
@@ -72,7 +71,7 @@ function PlaceholderBox(p: {
                 })
             }
 
-        </div>
+        </div> */}
 
 
     </div>

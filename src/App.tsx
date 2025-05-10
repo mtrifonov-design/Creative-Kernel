@@ -43,9 +43,13 @@ globalThis.CREATIVE_KERNEL = kernel;
 globalThis.PRIVILEGED_MODALITY = privilegedModality;
 globalThis.PERSISTENCE_MODALITY = persistenceModality;
 
+const DraggingAssetContext = React.createContext<[boolean, (b: boolean) => void] | null>(null);
+
 const App: React.FC = () => {
 
     const [ready, setReady] = React.useState(false);
+    const [dragging, setDragging] = React.useState(false);
+
 
     const guard = useRef(false);
     useEffect(() => {
@@ -98,14 +102,16 @@ const App: React.FC = () => {
 
 
     }, [])
-    return <StyleProvider>
+    return <DraggingAssetContext.Provider value={[dragging, setDragging]}>
+    <StyleProvider>
         <div style={{
             height: "100vh",
             width: "100vw",
             padding: "5px",
             display: "grid",
             gridTemplateRows: DEBUG ? "1fr 500px" : "1fr",
-        }}>
+        }}
+        >
             <div style={{
                 height: "100%",
                 width: "100%",
@@ -115,7 +121,8 @@ const App: React.FC = () => {
                 gridTemplateAreas: `"sidebar main"`,
                 
             }}>
-                <div style={{gridArea: "sidebar", width: "100%", height: "100%"}}>
+                <div style={{gridArea: "sidebar", width: "100%", height: "100%"}}
+                >
                     <Sidebar />
                 </div>
                 <div style={{
@@ -146,6 +153,18 @@ const App: React.FC = () => {
             }}
         ></div>
     </ StyleProvider>
+    </DraggingAssetContext.Provider>
 }
+
+function useDraggingAssetContext() {    
+    const context = React.useContext(DraggingAssetContext);
+    if (!context) {
+        throw new Error("useDraggingAssetContext must be used within a DraggingAssetProvider");
+    }
+    return context;
+}
+
+export { useDraggingAssetContext };
+
 export default App;
 

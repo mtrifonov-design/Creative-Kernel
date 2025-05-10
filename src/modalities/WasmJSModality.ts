@@ -27,7 +27,7 @@ class WasmJSModality implements CK_Modality {
     async installUnit(unit: CK_InstallUnit): Promise<false | { [key:string] : any }> {
         const { instance } = unit;
         const { instance_id, resource_id } = instance;
-        //////console.log(instance_id, resource_id);
+        ////////console.log(instance_id, resource_id);
         const module = await getQuickJS();
         const vm = module.newContext();
         this.instances[instance_id] = { module, vm, resourceId: resource_id };
@@ -35,7 +35,7 @@ class WasmJSModality implements CK_Modality {
         const jsCode = await fetch(resource_id+"/index.js").then((res) => res.text());
         const logHandle = vm.newFunction("log", (...args) => {
             const nativeArgs = args.map(vm.dump);
-            console.log(...nativeArgs);
+            //console.log(...nativeArgs);
         });
         vm.setProp(vm.global,"log", logHandle);
         const errorHandle = vm.newFunction("log", (...args) => {

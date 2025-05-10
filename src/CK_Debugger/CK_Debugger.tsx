@@ -26,7 +26,7 @@ const subscribe = (callback: () => void) => {
 }
 
 function CK_Page({page}: {page: string}) {
-    //////console.log("Page", page);
+    ////////console.log("Page", page);
     if (page === "instances") {
         return <CK_InstancesPage />
     }

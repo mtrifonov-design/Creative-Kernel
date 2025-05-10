@@ -1,6 +1,7 @@
 import React, { useDeferredValue, useEffect } from "react";
 import { SimpleCommittedTextInput, Button, Icon } from "@mtrifonov-design/pinsandcurves-design";
 import { CorePluginBase } from "../../Config";
+import { useDraggingAssetContext } from "../../App";
 
 
 function Tool(p: {
@@ -10,6 +11,7 @@ function Tool(p: {
 }) {
     const { label, icon, address } = p;
     const [hover, setHover] = React.useState(false);
+    const [dragging, setDragging] = useDraggingAssetContext();
 
     return <div style={{
         display: "flex",
@@ -31,10 +33,15 @@ function Tool(p: {
         onMouseLeave={() => setHover(false)}
         draggable={true}
         onDragStart={(e) => {
-            console.log("dragstart", label);
+            //console.log("dragstart", label);
+            setDragging(true);
             e.dataTransfer?.setData("application/json", JSON.stringify({
                 address: address,
             }));
+        }}
+        onDragEnd={(e) => {
+            setDragging(false);
+            e.stopPropagation();
         }}
     >
         <div>{label}</div>

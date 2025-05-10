@@ -11,7 +11,7 @@ class IframeModality implements CK_Modality {
 
         const iframe = this.instances[id];
         //post message
-        //console.log("sendMessage", id, message, iframe);
+        ////console.log("sendMessage", id, message, iframe);
         if (iframe) {
             iframe.contentWindow?.postMessage({
                 type: 'ck-message',
@@ -105,14 +105,14 @@ class IframeModality implements CK_Modality {
 
 
     async installUnit(unit: CK_InstallUnit): Promise<false | { [key: string]: any }> {
-        //console.log("installUnit", unit);
+        ////console.log("installUnit", unit);
         const { instance } = unit;
         const { instance_id, resource_id } = instance;
         const pw = generatePw();
         this.pw_id[pw] = instance_id;
         this.id_pw[instance_id] = pw;
         this.id_resource[instance_id] = resource_id;
-        // console.log(this.instances[instance_id])
+        // //console.log(this.instances[instance_id])
 
         const iframe = this.instances[instance_id] || document.createElement('iframe');
 
@@ -169,14 +169,12 @@ class IframeModality implements CK_Modality {
         // await a return message from the iframe
         const response = await new Promise((resolve) => {
             const listener = (event: MessageEvent) => {
-                //////console.log(event.data)
                 if (event.data.type === 'ck-message'
                     && event.data.payload.pw === this.id_pw[instance_id]
                     && event.data.payload.CK_COMPUTE === true
                 ) {
                     window.removeEventListener('message', listener);
                     const response = event.data.payload.response;
-                    //////console.log(response);
                     const responseKeys = Object.keys(response);
                     responseKeys.forEach((key) => {
                         const threadQueue = response[key];

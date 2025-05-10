@@ -13,7 +13,7 @@
     "immer": "^10.1.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "@mtrifonov-design/pinsandcurves-design": "^0.0.1"
+    "@mtrifonov-design/pinsandcurves-design": "^0.0.8"
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",

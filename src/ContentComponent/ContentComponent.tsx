@@ -2,6 +2,9 @@ import React, { useLayoutEffect, useEffect, useRef, useState, useCallback } from
 import { CK_Unit } from "../kernel/types";
 // import { getIframe } from "../iframe_manager";
 import PlaceholderBox from "./PlaceholderBox";
+import { Icon, Logo } from "@mtrifonov-design/pinsandcurves-design";
+import { useDraggingAssetContext } from "../App";
+
 
 function generateId() {
     return Math.random().toString(36).substring(2, 15);
@@ -16,6 +19,7 @@ function useIframeChannel(nodeId: string, address?: string) {
       if (!address || !frameRef.current) return;
   
       // first (real) mount ➜ open
+      //console.log("useIframeChannel", address, iframeId.current);
       if (!connected.current) {
         iframeId.current = generateId();
         UI_MODALITY.setIframe(nodeId, iframeId.current, address, frameRef.current);
@@ -27,7 +31,7 @@ function useIframeChannel(nodeId: string, address?: string) {
   
     /** Close with ACK and return only when peer confirms. */
     const closeWithAck = useCallback(async (subtreeRootId: string) => {
-        console.log("closeWithAck", subtreeRootId,connected.current);
+        //console.log("closeWithAck", subtreeRootId,connected.current);
       //if (!connected.current) return;
       await UI_MODALITY.terminateIframes(subtreeRootId);
       connected.current = false;
@@ -47,16 +51,24 @@ const ContentComponent: React.FC<{
     setPayload: (newPayload: any) => void,
 }> = ({ parentId, id, splitColumn, splitRow, closePanel, payload, setPayload }) => {
 
+
+    const initialized = payload && (payload.address !== undefined);
+    const [dropPossible, setDropPossible] = useState(false);
+    const [draggingAsset, setDraggingAsset] = useDraggingAssetContext();
+    //console.log("draggingAsset", draggingAsset);
+
+    const assetName = payload && payload.assetMetadata ? payload.assetMetadata.name : undefined;
+
     payload = payload !== undefined ? payload : {
         id: generateId(),
         address: undefined,
     }
 
     const address = payload !== undefined ? payload.address : undefined;
-    const setAddress = (newAddress: string, assetId? : string) => {
+    const setAddress = (newAddress: string, assetMetadata? : any) => {
         setPayload({
             address: newAddress,
-            assetId: assetId,
+            assetMetadata,
         });
     }
 
@@ -68,8 +80,6 @@ const ContentComponent: React.FC<{
         const { tree } = globalThis.UI_MODALITY.treeManager.getTree();
         let parentId;
         const v = tree[id];
-        // console.log(v);
-        // console.log(JSON.stringify(tree,null,2))
         if (v) {
             if (v.parentId) {
                 parentId = v.parentId;
@@ -78,22 +88,15 @@ const ContentComponent: React.FC<{
             }
         }
         await closeWithAck(parentId);
-        // globalThis.UI_MODALITY.terminateIframes(parentId);
-        //unloaded.current = true;
         closePanel();
     }
 
     const splitRowCommand = async () => {
         await closeWithAck(id);
-        
-        //globalThis.UI_MODALITY.terminateIframes(id);
-        //unloaded.current = true;
         splitRow();
     }
     const splitColumnCommand = async () => {
         await closeWithAck(id);
-        // globalThis.UI_MODALITY.terminateIframes(id);
-        //unloaded.current = true;
         splitColumn();
     }
 
@@ -104,45 +107,93 @@ const ContentComponent: React.FC<{
         overflow: "hidden",
         boxSizing: "border-box",
         padding: "2px",
+        borderRadius: "var(--borderRadiusSmall)",
+        position: "relative",
 
     }}
         onDragOver={(e) => {
             e.preventDefault();
             e.dataTransfer.dropEffect = "move";
+            setDropPossible(true);
         }}
-        onDragLeave={(e) => {}}
+        onDragLeave={(e) => {
+            setDropPossible(false);
+        }}
         
-        onDrop={(e) => {
+        onDrop={async (e) => {
+            //if (initialized) return;
+            setDraggingAsset(false);
+            setDropPossible(false);
             e.preventDefault();
             e.stopPropagation();
             const data = e.dataTransfer.getData("application/json");
             const parsedData = JSON.parse(data);
-            const { address, assetId } = parsedData;
-            console.log(parsedData)
+            const { address, assetMetadata } = parsedData;
             if (address) {
-                setAddress(address, assetId);
+                await closeWithAck(id);
+                setDropPossible(false);
+                setAddress(address, assetMetadata);
             }
         }}
 
     >
         <div style={{
-            borderRadius: "8px",
-            overflow: "hidden",
-            display: "grid",
-            gridTemplateRows: "25px 1fr",
+            position: "absolute",
+            backgroundColor: "var(--gray1)",
             width: "100%",
             height: "100%",
-            border: "2px solid var(--gray2)"
+            top: 0,
+            left: 0,
+            zIndex: 0,
+        }}>
+            <Logo style={{
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                
+                width: "200px",
+                height: "200px",
+
+            }} 
+            color ={"var(--gray3)"}
+            />
+        </div>
+        <div style={{
+            borderRadius: "var(--borderRadiusSmall)",
+            overflow: "hidden",
+            display: "grid",
+            gridTemplateRows: "35px 1fr",
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            zIndex: 1,
+            border: dropPossible ? "2px solid var(--yellow2)" : "2px solid var(--gray2)"
         }}>
             <div style={{
                 backgroundColor: "var(--gray2)",
                 display: "flex",
-                justifyContent: "flex-end",
+                justifyContent: "space-between",
                 alignItems: "center",
+                width: "100%",
                 padding: "5px",
                 gap: "5px",
 
             }}>
+                <div style={{
+                    color: "var(--gray6)",
+                    marginLeft: "5px",
+                }}>
+                    {assetName ? assetName : ""}
+                </div>
+                <div style={{
+                    display: "flex",
+                    justifyContent: "flex-end",
+                    alignItems: "center",
+                }}>
+
                 <div style={{
                     display: "flex",
                     gap: "2px",
@@ -151,33 +202,21 @@ const ContentComponent: React.FC<{
                     alignItems: "center",
                     
                 }}>
-                    <button
-                        style={{
-                            width: "18px",
-                            height: "18px",
-                            fontSize: "8px",
-                            backgroundColor: "#59646E",
-                            color:"#C6D6E6"
-                        }}
-                        onClick={splitRowCommand}>|</button>
-                    <button
-                        style={{
-                            width: "18px",
-                            height: "18px",
-                            fontSize: "8px",
-                            backgroundColor: "#59646E",
-                            color: "#C6D6E6"
-                        }}
-                        onClick={splitColumnCommand}>—</button>
-                    <button
-                        style={{
-                            width: "18px",
-                            height: "18px",
-                            fontSize: "8px",
-                            backgroundColor: "#59646E",
-                            color: "#C6D6E6"
-                        }}
-                        onClick={closeSelf}>X</button>
+
+
+                    <Icon iconName={"border_vertical"}
+                        style={{margin:"0px"}}
+                        onClick={splitRowCommand}
+                    />
+                    <Icon iconName={"border_horizontal"}
+                        style={{margin:"0px"}}
+                        onClick={splitColumnCommand}
+                    />
+                    <Icon iconName={"close"}
+                        style={{margin:"0px"}}
+                        onClick={closeSelf}
+                    />
+                </div>
                 </div>
             </div>
             {address ?
@@ -186,13 +225,18 @@ const ContentComponent: React.FC<{
                         width: "100%",
                         height: "100%",
                         border: "none",
-                        display: "block",
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        pointerEvents: draggingAsset ? "none" : "auto",
+
                     }}
                     key={address}
                 > </iframe>
                 : <PlaceholderBox setAddress={setAddress} />
             }
         </div>
+        
     </div>
 }
 

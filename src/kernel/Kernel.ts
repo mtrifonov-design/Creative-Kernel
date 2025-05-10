@@ -109,7 +109,7 @@ class CreativeKernel {
         }
         const unitIdx = thread.findIndex((unit) => unit.id === unitId);
         const unit = thread[unitIdx];
-        // console.log(unit);
+        // //console.log(unit);
         if (!unit) {
             throw new Error(`Unit ${unitId} does not exist in thread ${threadId}`);
         }
@@ -220,10 +220,10 @@ class CreativeKernel {
     public async pushWorkload(workload: {
         [threadId: string]: CK_Unit[];
     }) {
-        //console.log(workload)
+        ////console.log(workload)
         if (Object.keys(workload).length === 0) return;
         if (this.workloadProcessing) {
-            //console.log("Workload processing, pushing workload to queue");
+            ////console.log("Workload processing, pushing workload to queue");
             this.pendingWorkloads.push(workload);
             return;
         };
@@ -282,11 +282,11 @@ class CreativeKernel {
                 draft[key].push(...newThreadQueue);
             });
         })
-        ////console.log("workload", this.threads);
+        //////console.log("workload", this.threads);
         await this.run();
         let mergedWorkload = {};
         while (this.pendingWorkloads.length > 0) {
-            //console.log(this.pendingWorkloads.length)
+            ////console.log(this.pendingWorkloads.length)
             const nextWorkload = this.pendingWorkloads[0];
             if (nextWorkload) {
                 const mergedWorkloadKeys = Object.keys(mergedWorkload);
@@ -333,7 +333,7 @@ class CreativeKernel {
                         delete draft[threadId];
                     }
                 });
-                // console.log(this.registry,unit)
+                // //console.log(this.registry,unit)
                 const filteredRegistry = this.registry.filter((item) => {
                     return item.instance_id !== unit.instance.instance_id
                         || item.resource_id !== unit.instance.resource_id
@@ -393,7 +393,7 @@ class CreativeKernel {
     }
 
     addInstallUnits() {
-        // console.log(this.queuedReceivers)
+        // //console.log(this.queuedReceivers)
         this.threads = produce(this.threads, (draft) => {
             const threadKeys = Object.keys(draft);
             const threadQueues = draft;
@@ -417,7 +417,7 @@ class CreativeKernel {
                                 && item.resource_id === unit.receiver.resource_id
                                 && item.modality === unit.receiver.modality;
                         });
-                        // console.log(receiver)
+                        // //console.log(receiver)
                         if (!receiver) {
                             const queuedReceiver = this.queuedReceivers.find((item) => {
                                 return item.instance_id === unit.receiver.instance_id
@@ -480,7 +480,7 @@ class CreativeKernel {
         }
         const unitIdx = this.threads[threadId].findIndex((unit) => unit.id === unitId);
         const unit = this.threads[threadId][unitIdx] as CK_WorkerUnit;
-        // console.log(unit)
+        // //console.log(unit)
         const modality = this.modalities[unit.receiver.modality];
         if (!modality) {
             throw new Error(`Modality ${unit.receiver.modality} not found`);
@@ -489,7 +489,7 @@ class CreativeKernel {
         if (threadQueues === undefined) {
             throw new Error(`Error computing unit ${unitIdx} in thread ${threadId}`);
         }
-        //console.log("threadQueues", threadQueues);
+        ////console.log("threadQueues", threadQueues);
 
         this.threads = produce(this.threads, (draft) => {
             const threadKeys = Object.keys(threadQueues);
@@ -501,8 +501,10 @@ class CreativeKernel {
                 // modify thread queue by queueing installs where needed
                 const newThreadQueue: CK_Unit[] = [];
                 threadQueue.forEach((unit: CK_Unit) => {
-                    unit.id = generateId();
                     //console.log("unit", unit);
+                    unit = { ...unit }
+                    unit.id = generateId();
+  
                     if (unit.type === "blocker") {
                         newThreadQueue.push(unit);
                         return;
@@ -523,7 +525,7 @@ class CreativeKernel {
                                     && item.modality === unit.receiver.modality;
                             });
                             if (!queuedReceiver) {
-                                //console.log("queueing receiver", unit.receiver.instance_id);
+                                ////console.log("queueing receiver", unit.receiver.instance_id);
                                 this.queuedReceivers.push({...unit.receiver});
                                 newThreadQueue.push({
                                     type: "install",
@@ -546,7 +548,7 @@ class CreativeKernel {
             });
             // remove the unit from the thread
             const unitIdx = draft[threadId].findIndex((unit) => unit.id === unitId);
-            //////console.log("unitIdx", unitIdx);
+            ////////console.log("unitIdx", unitIdx);
             draft[threadId].splice(unitIdx, 1);
             // check if the thread is empty
             if (draft[threadId].length === 0) {
@@ -573,9 +575,9 @@ class CreativeKernel {
             }
             return null;
         }).filter((value) => value !== null) as [threadId: string, unit: CK_Unit][];
-        ///console.log("firstUnits", firstUnits);
+        /////console.log("firstUnits", firstUnits);
         const eligibleUnits = firstUnits.filter(([threadId,unit]) => {
-            // console.log(unit);
+            // //console.log(unit);
             if (unit.type === "install") return true;
             if (unit.type === "blocker") return false;
             if (unit.type === "terminate") return true;

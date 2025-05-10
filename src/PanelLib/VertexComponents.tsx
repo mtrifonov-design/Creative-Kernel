@@ -32,6 +32,7 @@ function getSnapshot() {
 
 const TreeContext = createContext<[Tree, (t: Tree) => void] | null>(null);
 const DraggingContext = createContext<[boolean, string | null, (b: boolean) => void, (s: string) => void] | null>(null);
+
 const TreeComponent: React.FC = () => {
 
 
@@ -41,7 +42,7 @@ const TreeComponent: React.FC = () => {
     const [draggingId, setDraggingId] = useState<string | null>(null);
 
     useEffect(() => {
-        // console.log("TreeComponent mounted");
+        // //console.log("TreeComponent mounted");
         globalThis.UI_MODALITY.rendered();
     })
 
@@ -52,7 +53,8 @@ const TreeComponent: React.FC = () => {
         return <div>No root found</div>;
     }
 
-    return (<div
+    return (
+    <div
     style={{
         width: "100%",
         height: "100%",
@@ -70,7 +72,8 @@ const TreeComponent: React.FC = () => {
             }
             </DraggingContext.Provider>
         </TreeContext.Provider>
-    </div>);
+    </div>
+    );
 
 }
 
@@ -222,6 +225,7 @@ const Separator: React.FC<{direction: string, setDragging: (b: boolean) => void,
         </div>
     );
 };
+
 
 
 export { TreeComponent, VertexBComponent, VertexCComponent };
