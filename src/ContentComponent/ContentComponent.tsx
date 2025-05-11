@@ -169,7 +169,7 @@ const ContentComponent: React.FC<{
             left: 0,
             width: "100%",
             height: "100%",
-            zIndex: 1,
+            zIndex: 0,
             border: dropPossible ? "2px solid var(--yellow2)" : "2px solid var(--gray2)"
         }}>
             <div style={{
@@ -223,12 +223,12 @@ const ContentComponent: React.FC<{
                 <iframe ref={frameRef}
                     style={{
                         width: "100%",
-                        height: "100%",
+                        height: "calc(100% - 35px)",
                         border: "none",
                         position: "absolute",
-                        top: 0,
+                        top: "35px",
                         left: 0,
-                        pointerEvents: draggingAsset ? "none" : "auto",
+                        pointerEvents: draggingAsset ? "none" : "inherit",
 
                     }}
                     key={address}

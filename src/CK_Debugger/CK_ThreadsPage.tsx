@@ -147,6 +147,8 @@ function UnitInspector() {
                         <pre style={{
                             backgroundColor: "#cccccc",
                             padding: "5px",
+                            height: "200px",
+                            overflow: "scroll",
                         }}>
                         {JSON.stringify(unit.payload, null, 2)}
                         </pre>
