@@ -38,3 +38,11 @@ Queue needs to be turned into a stack.
 ___
 
 - Highlight segments on Selection (Editing area) DELAYED
+
+
+
+- Add Rendering Functionality DONE
+- Fix default values DONE
+- Add Birth Rate
+- Identify and fix panel bugs
+- Identify and fix panel dragging bugs

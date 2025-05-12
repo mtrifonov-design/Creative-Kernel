@@ -15,6 +15,7 @@ type CK_WorkerUnit = {
     payload: any;
     id: string;
 }
+
 type CK_InstallUnit = {
     type: 'install';
     instance: CK_Instance;
