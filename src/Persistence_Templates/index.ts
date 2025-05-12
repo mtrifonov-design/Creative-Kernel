@@ -1,6 +1,6 @@
 import bb from './BouncingBall.json';
 import s from './ForSasha.json'
-import cs from './CybSpag.json'
+import cs from './cybspagnew.json'
 import ll from './LaserLinguine.json'
 
 const TEMPLATES = {
