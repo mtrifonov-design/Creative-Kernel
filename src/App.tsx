@@ -12,7 +12,7 @@ import { Button, SimpleCommittedTextInput, StyleProvider } from '@mtrifonov-desi
 import Sidebar from './Sidebar';
 import AssetViewer from './Sidebar/ContextMenus/AssetViewer';
 
-const DEBUG = false;
+const DEBUG = true;
 
 
 const iframeModality = new IframeModality();
