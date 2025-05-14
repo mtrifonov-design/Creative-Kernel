@@ -17,6 +17,11 @@ const getRunningSnapshot = () => {
     return kernel.getRunning();
 }
 
+const getSnapshot = () => {
+    const kernel = (window as any).CREATIVE_KERNEL;
+    return kernel.getSnapshot();
+}
+
 const subscribe = (callback: () => void) => {
     const kernel = (window as any).CREATIVE_KERNEL;
     const unsubscribe = kernel.subscribe(callback);
@@ -27,9 +32,9 @@ const subscribe = (callback: () => void) => {
 
 function CK_Page({page}: {page: string}) {
     ////////console.log("Page", page);
-    if (page === "instances") {
-        return <CK_InstancesPage />
-    }
+    // if (page === "instances") {
+    //     return <CK_InstancesPage />
+    // }
     if (page === "threads") {
         return <CK_ThreadsPage />
     }
@@ -40,12 +45,15 @@ const ThreadContext = createContext(null);
 const RegistryContext = createContext(null);    
 function CK_Debugger() {
 
-    const threads = useSyncExternalStore(subscribe, getThreadSnapshot)
-    const registry = useSyncExternalStore(subscribe, getRegistrySnapshot)
+    const { plate, pending } = useSyncExternalStore(subscribe, getSnapshot)
+    const threads = plate;
+    console.log(plate,pending)
+    
+    //const registry = useSyncExternalStore(subscribe, getRegistrySnapshot)
 
     const [currentPage, setCurrentPage] = React.useState("threads");
 
-    const running = useSyncExternalStore(subscribe, getRunningSnapshot);
+    //const running = useSyncExternalStore(subscribe, getRunningSnapshot);
 
 
 
@@ -58,7 +66,7 @@ function CK_Debugger() {
 
 
     return (
-        <RegistryContext.Provider value={registry}>
+        <RegistryContext.Provider value={null}>
         <ThreadContext.Provider value={threads}>
             <div style={{
                 border: "1px solid black",
@@ -73,7 +81,7 @@ function CK_Debugger() {
                     gap: "10px",
                 }}>
                     DEBUGGER
-                    <button onClick={toggleRunning}>{running? "running mode" : "step-through mode"}</button>
+                    {/* <button onClick={toggleRunning}>{running? "running mode" : "step-through mode"}</button> */}
                 </div>
                 <div style={{
                     display: "flex",

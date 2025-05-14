@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState } from "react";
 import { ThreadContext } from "./CK_Debugger";
-import CreativeKernel from "../kernel/kernel";
+import CreativeKernel from "../kernel/CreativeKernel";
 import CK_InstancesPage from "./CK_InstancesPage";
 
 function Unit ({ unit, id }: { unit: any, id: string }) {
@@ -11,25 +11,27 @@ function Unit ({ unit, id }: { unit: any, id: string }) {
     }
 
     const threads = useContext(ThreadContext);
+    
     const kernel = (window as any).CREATIVE_KERNEL as CreativeKernel;
     const threadId = Object.keys(threads).find((key) => threads[key].find((u) => u.id === unit.id) != undefined);
 
     const installable = unit.type === "install";
-    const computable = unit.type === "worker" && kernel.checkIfUnitReady(threadId, unit.id);
+    const computable = unit.type === "worker";
     const terminatable = unit.type === "terminate";
 
     const doAction = async () => {
-        if (installable) {
-            await kernel.installUnit(threadId, unit.id);
-            setSelectedUnit(null);
-        }
-        if (computable) {
-            await kernel.computeUnit(threadId, unit.id);
-        }
-        if (terminatable) {
-            await kernel.terminateUnit(threadId, unit.id);
-            setSelectedUnit(null);
-        }
+        // if (installable) {
+        //     await kernel.installUnit(threadId, unit.id);
+        //     setSelectedUnit(null);
+        // }
+        // if (computable) {
+        //     await kernel.computeUnit(threadId, unit.id);
+        // }
+        // if (terminatable) {
+        //     await kernel.terminateUnit(threadId, unit.id);
+        //     setSelectedUnit(null);
+        // }
+        await kernel.step();
     }
 
     const [hover, setHover] = useState(false);
@@ -69,6 +71,7 @@ function Unit ({ unit, id }: { unit: any, id: string }) {
 
 function Thread({ threadId }: { threadId: string }) {
     const threads = useContext(ThreadContext);
+    
     const thread = threads[threadId];
     if (!thread) {
         return <div>Thread {threadId} not found</div>
@@ -212,7 +215,7 @@ function CK_ThreadsPage() {
             }}>
                 <UnitInspector />
             </div>
-            <CK_InstancesPage />
+            {/* <CK_InstancesPage /> */}
         </div>
         </UnitInspectorContext.Provider>
     );

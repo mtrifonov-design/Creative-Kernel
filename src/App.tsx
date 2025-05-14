@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { TreeComponent } from './PanelLib/VertexComponents';
 import './App.css';
 import CK_Debugger from './CK_Debugger/CK_Debugger';
-import CreativeKernel from "./kernel/kernel";
+import CreativeKernel from "./kernel/CreativeKernel";
 import IframeModality from './modalities/IframeModality';
 import WasmJSModality from './modalities/WasmJSModality';
 import UIModality from './modalities/UIModality';
@@ -22,16 +22,13 @@ const persistenceModality = new PersistenceModality();
 const privilegedModality = new PrivilegedModality();
 
 const kernel = new CreativeKernel({
-    modalities: {
         iframe: iframeModality,
         wasmjs: wasmJSModality,
         ui: uiModality,
         persistence: persistenceModality,
         privileged: privilegedModality,
-    },
-    snapshot: null,
-});
-kernel.setRunning(!DEBUG);
+    },);
+kernel.setEmissionMode("STEP");
 privilegedModality.appendInstance('asset_viewer', (modality) => {
     return new AssetViewer(modality);
 })

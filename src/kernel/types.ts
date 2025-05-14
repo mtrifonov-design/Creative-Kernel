@@ -5,14 +5,14 @@ type CK_Instance = {
     modality: string;
     resource_id: string;
     instance_id: string;
-    metadata?: any;
+    metadata?: unknown;
 }
 
 type CK_WorkerUnit = {
     type: 'worker';
     receiver: CK_Instance;
     sender: CK_Instance;
-    payload: any;
+    payload: unknown;
     id: string;
 }
 
@@ -20,7 +20,7 @@ type CK_InstallUnit = {
     type: 'install';
     instance: CK_Instance;
     id: string;
-    metadata?: any;
+    metadata?: unknown;
 }
 
 type CK_TerminateUnit = {
@@ -42,12 +42,14 @@ type CK_Threads = {
 
 
 interface CK_Modality {
-    installUnit: (unit: CK_InstallUnit) => Promise<false | { [key: string]: any }>;
+    installUnit: (unit: CK_InstallUnit) => Promise<false | { [key: string]: unknown }>;
     computeUnit: (unit: CK_WorkerUnit) => Promise<{ [threadId: string]: CK_Unit[] }>;
     terminateUnit: (unit: CK_TerminateUnit) => Promise<boolean>;
 }
 
-export {
+type CK_Workload = { [threadId: string]: CK_Unit[] };
+
+export type {
     CK_Modality,
     CK_Unit,
     CK_WorkerUnit,
@@ -55,5 +57,6 @@ export {
     CK_TerminateUnit,
     CK_BlockerUnit,
     CK_Instance,
-    CK_Threads
+    CK_Threads,
+    CK_Workload,
 }

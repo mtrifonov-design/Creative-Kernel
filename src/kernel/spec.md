@@ -9,9 +9,11 @@ Description of the computation model used in a pins and curves environment.
 The kernel is a discrete‑time transition system running in a host runtime.  
 It owns an **array of FIFO queues** (called *threads*) that carry *units of work* originating from *modalities*.
 
-Computation is triggered by modalities exclusively through the public call `push_workload`, which enqueues a **workload** (itself an array of queues) into a pending FIFO.  
+Computation is triggered by modalities exclusively through the public call `push_workload`, which enqueues a **workload** (itself an array of queues) into a pending workload queue.  
 
 The kernel then executes workloads *serially*: while one workload is active, later workloads accumulate but never mix.
+
+The kernel is *extensible* through **side effect providers** that hook into various stages of the algorithm.
 
 ---
 
@@ -39,6 +41,8 @@ The workload the kernel is currently operating on.
 **front(Tid)**
 Denotes the first unit in the plate.
 
+
+
 ---
 
 ## State Variables
@@ -46,15 +50,28 @@ Denotes the first unit in the plate.
 ```text
 plate   : Workload      
 pending : Queue of workloads
+sideEffectProviders: Array of side effect providers
 ```
 
 ---
 
-## Kernel Execution Loop
+## Kernel Public API
 
 ```pseudocode
-loop forever:
-    kernel.step();
+function step() {...}
+function pushWorkload(workload) {...}
+```
+
+---
+
+## Kernel pushWorkload Algorithm
+
+```pseudocode
+function pushWorkload(workload):
+    workload ← sideEffectProviders.forEach(sideEffectProvider => sideEffectProvider.processReceivedWorkload());
+    pending.enqueue(workload);
+    sideEffectProviders.forEach(sideEffectProvider => sideEffectProvider.updateGlobalState(plate,pending));
+    sideEffectProviders.forEach(sideEffectProvider => sideEffectProvider.workloadWasPushed());
 ```
 
 ---
@@ -67,6 +84,8 @@ function step:
         plate ← pending.dequeue() 
 
     if plate.isEmpty():
+        sideEffectProviders.forEach(sideEffectProvider => sideEffectProvider.updateGlobalState(plate,pending));
+        sideEffectProviders.forEach(sideEffectProvider => sideEffectProvider.stepComplete());
         return;
 
     plate ← resolveBlockedThreads(plate)
@@ -77,6 +96,8 @@ function step:
 
     Δplate ← modality(u.modalityId).process(u);
     plate ← merge(plate, Δplate)
+    sideEffectProviders.forEach(sideEffectProvider => sideEffectProvider.updateGlobalState(plate,pending));
+    sideEffectProviders.forEach(sideEffectProvider => sideEffectProvider.stepComplete());
 ```
 
 ---
