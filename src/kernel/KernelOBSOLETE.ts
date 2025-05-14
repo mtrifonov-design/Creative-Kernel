@@ -1,3 +1,7 @@
+// OBSOLETE: This file is not used anymore, but is kept for reference
+// and to be able to compare with the new version of the kernel.
+
+
 import { produce } from "immer";
 import {
     CK_Modality,

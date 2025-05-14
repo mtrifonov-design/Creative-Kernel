@@ -6,9 +6,33 @@ export class AutoInstallSideEffect implements SideEffect {
   private readonly installed = new Set<string>();
   private readonly queued = new Set<string>();
 
-  constructor(private readonly idOf: (inst: CK_Instance) => string = AutoInstallSideEffect.defaultIdOf) {}
+  constructor(private readonly idOf: (inst: CK_Instance) => string = AutoInstallSideEffect.defaultIdOf) { }
 
   processReceivedWorkload(workload: CK_Workload): CK_Workload {
+    const clone: CK_Workload = structuredClone(workload);
+
+    for (const tid of Object.keys(clone)) {
+      const out: CK_Unit[] = [];
+      for (const u of clone[tid]) {
+        if (u.type === "worker") {
+          const receiverKey = this.idOf(u.receiver);
+          if (!this.installed.has(receiverKey) && !this.queued.has(receiverKey)) {
+            this.queued.add(receiverKey);
+            out.push({
+              type: "install",
+              instance: u.receiver,
+              id: crypto.randomUUID(),
+            } as CK_InstallUnit);
+          }
+        }
+        out.push(u);
+      }
+      clone[tid] = out;
+    }
+    return clone;
+  }
+
+  processReceivedDelta(workload: CK_Workload): CK_Workload {
     const clone: CK_Workload = structuredClone(workload);
 
     for (const tid of Object.keys(clone)) {
@@ -37,8 +61,8 @@ export class AutoInstallSideEffect implements SideEffect {
 
   updateGlobalState(plate: CK_Workload): void {
   }
-  workloadWasPushed() {}
-  stepComplete(unit : CK_Unit) {
+  workloadWasPushed() { }
+  stepComplete(unit: CK_Unit) {
     if (unit.type === "install") {
       this.installed.add(this.idOf(unit.instance));
       this.queued.delete(this.idOf(unit.instance));

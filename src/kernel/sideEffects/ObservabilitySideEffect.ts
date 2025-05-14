@@ -31,7 +31,10 @@ class ObservabilitySideEffect implements SideEffect {
   }
 
   workloadComplete(): void {
-    if (this.mode === "WORKLOAD" || this.mode === "STEP") {
+    if (this.mode === "WORKLOAD" 
+      || this.mode === "STEP"
+      || (this.mode === "SILENT" && this.snapshot.pending.length === 0)
+    ) {
       this.fire();
     }
   }
@@ -40,13 +43,22 @@ class ObservabilitySideEffect implements SideEffect {
   processReceivedWorkload(w: CK_Workload) {
     return w;
   }
+
+  processReceivedDelta(delta: CK_Workload): CK_Workload {
+      return delta;
+  }
+
   updateGlobalState(plate: CK_Workload, pending: CK_Workload[]) {
     this.snapshot = {
         plate: structuredClone(plate),
         pending: pending,
     }
   }
-  workloadWasPushed() {}
+  workloadWasPushed() {
+    if (this.mode === "WORKLOAD" || this.mode === "STEP") {
+      this.fire();
+    }
+  }
   stepComplete() {
     if (this.mode === "STEP") {
       this.fire();

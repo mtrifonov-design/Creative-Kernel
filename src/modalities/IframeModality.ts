@@ -1,4 +1,4 @@
-import CreativeKernel from "../kernel/kernel";
+import CreativeKernel from "../kernel/KernelOBSOLETE";
 import { CK_InstallUnit, CK_Modality, CK_Unit, CK_WorkerUnit, CK_TerminateUnit } from "../kernel/types";
 
 const generatePw = () => {

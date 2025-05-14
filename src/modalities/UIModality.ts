@@ -1,4 +1,4 @@
-import CreativeKernel from "../kernel/kernel";
+import CreativeKernel from "../kernel/KernelOBSOLETE";
 import { CK_InstallUnit, CK_Instance, CK_Modality, CK_TerminateUnit, CK_Unit, CK_WorkerUnit } from "../kernel/types";
 import TreeManager from "../PanelLib/TreeManager";
 import { Tree } from "../PanelLib/types";

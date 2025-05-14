@@ -1,4 +1,4 @@
-import CreativeKernel from "../kernel/kernel";
+import CreativeKernel from "../kernel/KernelOBSOLETE";
 import { CK_InstallUnit, CK_Modality, CK_TerminateUnit, CK_Unit, CK_WorkerUnit } from "../kernel/types";
 
 class PrivilegedModality implements CK_Modality {

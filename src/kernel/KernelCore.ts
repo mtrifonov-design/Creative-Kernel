@@ -57,9 +57,10 @@ export class KernelCore {
     }
 
     const unit = this.plate[eligibleTid].shift()!;
+    let delta: CK_Workload = {};
     switch (unit.type) {
       case "worker":
-        this.applyDelta(await this.modalities[unit.receiver.modality].computeUnit(unit));
+        delta = await this.modalities[unit.receiver.modality].computeUnit(unit);
         break;
       case "install":
         await this.modalities[unit.instance.modality].installUnit(unit);
@@ -70,6 +71,11 @@ export class KernelCore {
         default:
             throw new Error(`Unknown unit type: ${unit.type}`);
     }
+
+    for (const se of this.sideEffects) {
+        delta = se.processReceivedDelta(delta);
+    }
+    this.applyDelta(delta);
 
     if (this.plate[eligibleTid].length === 0) delete this.plate[eligibleTid];
 

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState } from "react";
 import { RegistryContext, ThreadContext } from "./CK_Debugger";
-import CreativeKernel from "../kernel/kernel";
+import CreativeKernel from "../kernel/KernelOBSOLETE";
 import { CK_Instance } from "../kernel/types";
 
 

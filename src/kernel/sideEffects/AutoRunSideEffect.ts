@@ -19,33 +19,35 @@ export class AutoRunSideEffect implements SideEffect {
     }
 
     updateGlobalState(plate: CK_Workload, pending: CK_Workload[]) {
+        console.log("AutoRunSideEffect: updateGlobalState");
+        console.log(this.plate,this.pending);
         this.plate = plate;
         this.pending = pending;
     }
 
     async workloadWasPushed() {
-        if (this.mode === "WORKLOAD" || this.mode === "SILENT") {
-            if (!this.running) {
-                this.running = true;
-                this.kernel.step();
-            }
+        if (this.mode === "SILENT") {
+            this.kernel.step();
         }
     }
 
+    processReceivedDelta(delta: CK_Workload): CK_Workload {
+        return delta;
+    }
+
     stepComplete() {
+        console.log(this.mode);
         if (this.mode === "WORKLOAD" || this.mode === "SILENT") {
-            if (this.running) {
-                this.kernel.step();
-            }
+            this.kernel.step();
         }
     }
 
 
     workloadComplete() {
-        this.running = false;
         if (this.mode === "SILENT") {
-            if (this.pending.length > 0) {
-                this.running = true;
+            console.log("AutoRunSideEffect: workloadComplete");
+            console.log(this.pending,this.plate);
+            if (this.pending.length > 0 || Object.keys(this.plate).length > 0) {
                 this.kernel.step();
             }
         }

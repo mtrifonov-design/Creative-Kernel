@@ -1,118 +1,68 @@
-import React, { createContext, useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore } from "react";
 import CK_ThreadsPage from "./CK_ThreadsPage";
-import CK_InstancesPage from "./CK_InstancesPage";
+import { CK_Unit } from "../kernel/types";
 
-const getThreadSnapshot = () => {
-    const kernel = (window as any).CREATIVE_KERNEL;
-    return kernel.getThreads();
+interface CreativeKernel {
+    getThreads: () => { [key: string]: CK_Unit[] };
+    getPendingWorkloads: () => { [key: string]: CK_Unit[] }[];
+    subscribe: (callback: () => void) => () => void;
+    step: () => void;
 }
 
-const getRegistrySnapshot = () => {
-    const kernel = (window as any).CREATIVE_KERNEL;
-    return kernel.getRegistry();
-}
-
-const getRunningSnapshot = () => {
-    const kernel = (window as any).CREATIVE_KERNEL;
-    return kernel.getRunning();
+declare global {
+    interface Window {
+        CREATIVE_KERNEL: CreativeKernel;
+    }
 }
 
 const getSnapshot = () => {
-    const kernel = (window as any).CREATIVE_KERNEL;
-    return kernel.getSnapshot();
-}
+    return window.CREATIVE_KERNEL.getSnapshot();
+};
 
 const subscribe = (callback: () => void) => {
-    const kernel = (window as any).CREATIVE_KERNEL;
-    const unsubscribe = kernel.subscribe(callback);
-    return () => {
-        unsubscribe();
-    }
-}
+    return window.CREATIVE_KERNEL.subscribe(callback);
+};
 
-function CK_Page({page}: {page: string}) {
-    ////////console.log("Page", page);
-    // if (page === "instances") {
-    //     return <CK_InstancesPage />
-    // }
-    if (page === "threads") {
-        return <CK_ThreadsPage />
-    }
-    return <div>Not found.</div>
-}
-
-const ThreadContext = createContext(null);
-const RegistryContext = createContext(null);    
 function CK_Debugger() {
+    const { plate, pending } = useSyncExternalStore(subscribe, getSnapshot);
+    console.log("plate", plate);
+    console.log("pending", pending);
 
-    const { plate, pending } = useSyncExternalStore(subscribe, getSnapshot)
-    const threads = plate;
-    console.log(plate,pending)
-    
-    //const registry = useSyncExternalStore(subscribe, getRegistrySnapshot)
+    const [mode, setMode] = useState("STEP");
 
-    const [currentPage, setCurrentPage] = React.useState("threads");
-
-    //const running = useSyncExternalStore(subscribe, getRunningSnapshot);
-
-
-
-
-
-    const toggleRunning = () => {
-        const kernel = (window as any).CREATIVE_KERNEL;
-        kernel.setRunning(!kernel.getRunning());
-    }
-
+    const handleStep = () => {
+        window.CREATIVE_KERNEL.step();
+    };
 
     return (
-        <RegistryContext.Provider value={null}>
-        <ThreadContext.Provider value={threads}>
-            <div style={{
-                border: "1px solid black",
-                padding: "5px",
-                display: "grid",
-                gridTemplateRows: "20px 20px 1fr",
-                height: "100%",
-                backgroundColor: "white",
-            }}>
-                <div style={{
-                    display: "flex",
-                    gap: "10px",
-                }}>
-                    DEBUGGER
-                    {/* <button onClick={toggleRunning}>{running? "running mode" : "step-through mode"}</button> */}
-                </div>
-                <div style={{
-                    display: "flex",
-                    gap: "10px",
-                }}>
-                    <div
-                        style={{
-                            cursor: "pointer",
-                            fontWeight: currentPage === "threads" ? "bold" : "normal",
-                            textDecoration: currentPage === "threads" ? "underline" : "none",
-                        }}
-                        onClick={() => setCurrentPage("threads")}   
-                    >Threads</div>
-                    <div
-                        style={{
-                            cursor: "pointer",
-                            fontWeight: currentPage === "instances" ? "bold" : "normal",
-                            textDecoration: currentPage === "instances" ? "underline" : "none",
-                        }}
-                        onClick={() => setCurrentPage("instances")}   
-                    >Instances</div>
-                </div>
-                <CK_Page page={currentPage} />
+        <div style={{ padding: "10px", backgroundColor: "white" }}>
+            <h1>CK Debugger</h1>
 
-
-                {/* Add more UI elements here */}
+            <div style={{ marginBottom: "10px" }}>
+                <label>Mode: </label>
+                <select value={mode} onChange={(e) => {
+                    setMode(e.target.value)
+                    globalThis.CREATIVE_KERNEL.setEmissionMode(e.target.value)    
+                }}>
+                    <option value="STEP">STEP</option>
+                    <option value="WORKLOAD">WORKLOAD</option>
+                    <option value="SILENT">CONTINUOUS</option>
+                </select>
             </div>
-        </ThreadContext.Provider>
-        </RegistryContext.Provider>
+
+            <button onClick={handleStep}>DO STEP</button>
+
+            <div style={{ marginTop: "20px" }}>
+                <h2>Current Plate</h2>
+                <CK_ThreadsPage threads={plate} />
+            </div>
+
+            <div style={{ marginTop: "20px" }}>
+                <h2>Pending Workloads</h2>
+                <pre>{JSON.stringify(pending, null, 2)}</pre>
+            </div>
+        </div>
     );
 }
 
-export { ThreadContext, RegistryContext };
 export default CK_Debugger;
