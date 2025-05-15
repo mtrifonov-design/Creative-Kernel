@@ -66,6 +66,7 @@ class PersistenceModality implements CK_Modality {
         this.projectName = projectName;
         this.session = [];
         const registry = this.kernel?.getRegistry();
+        console.log(registry)
         if (!registry) {
             return;
         }
@@ -73,9 +74,10 @@ class PersistenceModality implements CK_Modality {
             (instance) => instance.metadata ? instance.metadata.persistent : false
         )
 
-        await this.kernel?.pushWorkload({
+        this.kernel?.pushWorkload({
             persistence: persistentInstances.map((instance) => {
                 const key = generateId();
+                console.log("key", key)
                 this.keys.push(key);
                 return {
                     type: "worker",

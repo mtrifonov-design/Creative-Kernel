@@ -65,9 +65,21 @@ export class KernelCore {
         if (unit.type === "worker") {
             delta = await this.modalities[unit.receiver.modality].computeUnit(unit);
         } else if (unit.type === "install") {
-            await  this.modalities[unit.instance.modality].installUnit(unit);
+            const metadata = await  this.modalities[unit.instance.modality].installUnit(unit);
+            if (metadata) {
+                this.sideEffects.forEach((s) => {
+                    if (s.instanceInstalled) {
+                        s.instanceInstalled(unit.instance, metadata);
+                    }
+                })
+            }
         } else if (unit.type === "terminate") {
             await this.modalities[unit.instance.modality].terminateUnit(unit);
+            this.sideEffects.forEach((s) => {
+                if (s.instanceTerminated) {
+                    s.instanceTerminated(unit.instance);
+                }
+            })
         } else {
             throw new Error(`Unknown unit type: ${unit.type}`);
         }

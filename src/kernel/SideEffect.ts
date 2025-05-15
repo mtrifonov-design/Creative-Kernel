@@ -1,4 +1,4 @@
-import { CK_Unit, CK_Workload } from './types';
+import { CK_Instance, CK_Unit, CK_Workload } from './types';
 
 export interface SideEffect {
 
@@ -9,4 +9,7 @@ export interface SideEffect {
   workloadWasPushed?(workload: CK_Workload): void;
   pushWorkloadComplete?(workload: CK_Workload): void;
   stepComplete?(processedUnit : CK_Unit): void;
+  instanceInstalled?(unit: CK_Instance, metadata: unknown): void;
+  instanceTerminated?(unit: CK_Instance): void; 
+
 }

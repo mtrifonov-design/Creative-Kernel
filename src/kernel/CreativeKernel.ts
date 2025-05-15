@@ -14,9 +14,10 @@ export default class CreativeKernel {
 
   constructor(modalities: { [k: string]: CK_Modality }) {
 
-    this.autoInstall = new AutoInstallSideEffect();
-    this.obs = new ObservabilitySideEffect(this.autoInstall);
+
     this.core = new KernelCore(modalities, []);
+    this.autoInstall = new AutoInstallSideEffect(this.core);
+    this.obs = new ObservabilitySideEffect(this.autoInstall);
     this.autoRun = new AutoRunSideEffect(this.core);
     this.recording = new RecordingSideEffect(this.core);
 
@@ -68,4 +69,8 @@ export default class CreativeKernel {
     this.obs.setMode(m)
     this.autoRun.setMode(m);
   };
+
+  terminateAllInstances() {
+    this.autoInstall.terminateAllInstances();
+  }
 }

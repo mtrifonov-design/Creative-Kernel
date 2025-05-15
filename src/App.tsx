@@ -28,7 +28,6 @@ const kernel = new CreativeKernel({
         persistence: persistenceModality,
         privileged: privilegedModality,
     },);
-kernel.setEmissionMode(DEBUG ? "STEP" : "SILENT");
 privilegedModality.appendInstance('asset_viewer', (modality) => {
     return new AssetViewer(modality);
 })
