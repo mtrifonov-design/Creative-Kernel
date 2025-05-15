@@ -56,12 +56,7 @@ export class AutoInstallSideEffect implements SideEffect {
     return clone;
   }
 
-  workloadComplete(): void {
-  }
 
-  updateGlobalState(plate: CK_Workload): void {
-  }
-  workloadWasPushed() { }
   stepComplete(unit: CK_Unit) {
     if (unit.type === "install") {
       this.installed.add(this.idOf(unit.instance));

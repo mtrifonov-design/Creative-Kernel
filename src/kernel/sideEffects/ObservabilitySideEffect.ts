@@ -31,6 +31,7 @@ class ObservabilitySideEffect implements SideEffect {
 
 
   setMode(m: EmissionMode) {
+    console.log("Setting emission mode to:", m);
     this.snapshot = {
       ...this.snapshot,
       mode: m,

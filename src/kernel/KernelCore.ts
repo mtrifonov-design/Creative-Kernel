@@ -18,19 +18,18 @@ export class KernelCore {
     pushWorkload(original: CK_Workload): void {
         // 1. side‑effect rewrite
         let workload = original;
+        for (const se of this.sideEffects) if (se.workloadWasPushed) se.workloadWasPushed(workload);
         for (const se of this.sideEffects) {
-            workload = se.processReceivedWorkload(workload);
+            workload = se.processReceivedWorkload ? se.processReceivedWorkload(workload) : workload;
         }
-
         if (this.isEmpty(this.plate)) {
             this.plate = workload;
         } else {
             this.pending.push(structuredClone(workload));
         }
 
-
-        for (const se of this.sideEffects) se.updateGlobalState(this.plate, this.pending);
-        for (const se of this.sideEffects) se.workloadWasPushed();
+        for (const se of this.sideEffects) if (se.updateGlobalState) se.updateGlobalState(this.plate, this.pending);
+        for (const se of this.sideEffects) if (se.pushWorkloadComplete) se.pushWorkloadComplete(workload);
     }
 
     /**
@@ -45,8 +44,8 @@ export class KernelCore {
         this.resolveEmptyThreads();
 
         if (this.isEmpty(this.plate)) {
-            this.sideEffects.forEach((s) => s.updateGlobalState(this.plate, this.pending));
-            this.sideEffects.forEach((s) => s.workloadComplete());
+            this.sideEffects.forEach((s) => {if (s.updateGlobalState) s.updateGlobalState(this.plate, this.pending)});
+            this.sideEffects.forEach((s) => {if (s.workloadComplete) s.workloadComplete()});
             return;
         }
 
@@ -77,14 +76,14 @@ export class KernelCore {
         }
 
         for (const se of this.sideEffects) {
-            delta = se.processReceivedDelta(delta);
+            delta = se.processReceivedDelta ? se.processReceivedDelta(delta) : delta;
         }
         this.applyDelta(delta);
 
         this.resolveEmptyThreads();
 
-        this.sideEffects.forEach((s) => s.updateGlobalState(this.plate, this.pending));
-        this.sideEffects.forEach((s) => s.stepComplete(unit));
+        this.sideEffects.forEach((s) => {if (s.updateGlobalState) s.updateGlobalState(this.plate, this.pending)});
+        this.sideEffects.forEach((s) => {if (s.stepComplete) s.stepComplete(unit)});
 
         return;
     }

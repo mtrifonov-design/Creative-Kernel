@@ -6,15 +6,7 @@ import ThreadsRenderer from "./ThreadsRenderer";
 import UnitDetails from "./UnitDetails";
 import { getSnapshot, subscribe } from "./utils";
 import { CK_Unit } from "../kernel/types";
-
-interface CreativeKernel {
-    getThreads: () => { [key: string]: CK_Unit[] };
-    getPendingWorkloads: () => { [key: string]: CK_Unit[] }[];
-    subscribe: (callback: () => void) => () => void;
-    step: () => void;
-    setEmissionMode: (mode: string) => void;
-    getSnapshot: () => { plate: { [key: string]: CK_Unit[] }; pending: { [key: string]: CK_Unit[] }[] }; // Added this method
-}
+import CreativeKernel from "../kernel/CreativeKernel";
 
 declare global {
     interface Global {
@@ -27,13 +19,17 @@ declare global {
     }
 }
 
-
-
 function CK_Debugger() {
     const { plate, pending, mode } = useSyncExternalStore(subscribe, getSnapshot);
-    const setMode = (nM: string) => globalThis.CREATIVE_KERNEL.setEmissionMode(nM);
+
+    console.log(plate, pending, mode);
+    const setEmissionMode = (nM: string) => {
+        console.log("Setting emission mode to:", nM);
+            window.CREATIVE_KERNEL.setEmissionMode(nM);
+    };
     const [view, setView] = useState<string | number>("current"); // 'current' or index of pending workload
     const [selectedUnit, setSelectedUnit] = useState<CK_Unit | null>(null);
+    const [isRecording, setIsRecording] = useState(false);
 
     const handleStep = () => {
         if (view === "current") {
@@ -44,6 +40,43 @@ function CK_Debugger() {
                 window.CREATIVE_KERNEL.step();
             } 
         }
+    };
+
+    const handleToggleRecording = () => {
+        if (isRecording) {
+            window.CREATIVE_KERNEL.stopRecording();
+        } else {
+            window.CREATIVE_KERNEL.startRecording();
+        }
+        setIsRecording(!isRecording);
+    };
+
+    const handleSaveRecording = () => {
+        const json = window.CREATIVE_KERNEL.serializeRecordingToJson();
+        const blob = new Blob([json], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "recording.json";
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
+    const handleLoadRecording = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const content = e.target?.result as string;
+                window.CREATIVE_KERNEL.loadRecordingFromJson(content);
+            };
+            reader.readAsText(file);
+        }
+    };
+
+    const handlePushRecording = () => {
+        window.CREATIVE_KERNEL.pushRecordingToPending();
+        setView("current");
     };
 
     const handleUnitHover = (unit: CK_Unit | null) => {
@@ -57,7 +90,7 @@ function CK_Debugger() {
             <div style={{ flex: 1 }}>
                 <h1>CK Debugger</h1>
 
-                <ModeSelector mode={mode} setMode={setMode} />
+                <ModeSelector mode={mode} setMode={setEmissionMode} />
 
                 <button
                     onClick={handleStep}
@@ -72,6 +105,22 @@ function CK_Debugger() {
                 >
                     {mode === "STEP" ? "Step" : mode === "WORKLOAD" ? "Finish Workload" : "Silent"}
                 </button>
+
+                <div style={{ marginTop: "20px" }}>
+                    <button onClick={handleToggleRecording} style={{ marginRight: "10px" }}>
+                        {isRecording ? "Stop Recording" : "Start Recording"}
+                    </button>
+                    <button onClick={handleSaveRecording} style={{ marginRight: "10px" }}>
+                        Save Recording to JSON
+                    </button>
+                    <label style={{ marginRight: "10px" }}>
+                        Load Recording from JSON
+                        <input type="file" accept=".json" onChange={handleLoadRecording} style={{ display: "none" }} />
+                    </label>
+                    <button onClick={handlePushRecording}>
+                        Push Recording to Pending
+                    </button>
+                </div>
 
                 <div style={{ marginTop: "20px" }}>
                     <Tabs pending={pending} view={view} setView={setView} />

@@ -6,6 +6,7 @@ interface ModeSelectorProps {
 }
 
 const ModeSelector: React.FC<ModeSelectorProps> = ({ mode, setMode }) => {
+    console.log("ModeSelector rendered with mode:", mode);
     return (
         <div style={{ marginBottom: "10px", display: "flex", gap: "10px" }}>
             <button

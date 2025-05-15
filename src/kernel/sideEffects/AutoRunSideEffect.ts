@@ -22,7 +22,7 @@ export class AutoRunSideEffect implements SideEffect {
         this.pending = pending;
     }
 
-    async workloadWasPushed() {
+    pushWorkloadComplete() {
         if (this.mode === "SILENT") {
             this.kernel.step();
         }

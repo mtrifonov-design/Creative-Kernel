@@ -31,7 +31,23 @@ const Tabs: React.FC<TabsProps> = ({ pending, view, setView }) => {
         );
     }
 
-    return <div style={{ display: "flex", gap: "10px" }}>{tabs}</div>;
+    return <div style={{ display: "flex", gap: "10px" }}>
+        <button
+            key={"currentplate"}
+            onClick={() => setView("current")}
+            style={{
+                padding: "5px 10px",
+                margin: "0 5px",
+                backgroundColor: view === "current" ? "#ddd" : "#fff",
+                border: "1px solid #ccc",
+                cursor: "pointer",
+            }}
+        >
+            Current Plate
+        </button>
+        {tabs}
+        
+        </div>;
 };
 
 export default Tabs;
