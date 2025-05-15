@@ -11,6 +11,8 @@ const UnitDetails: React.FC<UnitDetailsProps> = ({ selectedUnit, firstUnit }) =>
         <div
             style={{
                 width: "300px",
+                height: "100%",
+                overflow: 'scroll',
                 marginLeft: "20px",
                 padding: "10px",
                 border: "1px solid #ccc",

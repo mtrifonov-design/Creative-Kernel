@@ -22,8 +22,10 @@ export class AutoRunSideEffect implements SideEffect {
         this.pending = pending;
     }
 
+    running = false;
     pushWorkloadComplete() {
-        if (this.mode === "SILENT") {
+        if (this.mode === "SILENT" && this.running === false) {
+            this.running = true;
             this.kernel.step();
         }
     }
@@ -33,6 +35,7 @@ export class AutoRunSideEffect implements SideEffect {
     }
 
     stepComplete() {
+        //console.log("Step complete");
         if (this.mode === "WORKLOAD" || this.mode === "SILENT") {
             this.kernel.step();
         }
@@ -43,6 +46,8 @@ export class AutoRunSideEffect implements SideEffect {
         if (this.mode === "SILENT") {
             if (this.pending.length > 0 || Object.keys(this.plate).length > 0) {
                 this.kernel.step();
+            } else if (this.pending.length === 0) {
+                this.running = false;
             }
         }
     }

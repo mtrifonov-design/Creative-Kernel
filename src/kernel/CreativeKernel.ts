@@ -13,8 +13,9 @@ export default class CreativeKernel {
   private readonly recording: RecordingSideEffect;
 
   constructor(modalities: { [k: string]: CK_Modality }) {
-    this.obs = new ObservabilitySideEffect();
+
     this.autoInstall = new AutoInstallSideEffect();
+    this.obs = new ObservabilitySideEffect(this.autoInstall);
     this.core = new KernelCore(modalities, []);
     this.autoRun = new AutoRunSideEffect(this.core);
     this.recording = new RecordingSideEffect(this.core);
@@ -46,10 +47,8 @@ export default class CreativeKernel {
     this.recording.loadFromJson(json);  
   }
 
-
-  /* ----- public façade that mimics the old API ----- */
   pushWorkload(w: CK_Workload) {
-    console.log("Pushing workload:", w);
+    //console.log("Pushing workload:", w);
     this.core.pushWorkload(w);
   }
   step() {

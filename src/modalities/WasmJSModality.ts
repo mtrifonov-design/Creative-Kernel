@@ -27,10 +27,11 @@ class WasmJSModality implements CK_Modality {
     async installUnit(unit: CK_InstallUnit): Promise<false | { [key:string] : any }> {
         const { instance } = unit;
         const { instance_id, resource_id } = instance;
-        ////////console.log(instance_id, resource_id);
+        //console.log("installing", instance_id, resource_id);
         const module = await getQuickJS();
-        const vm = module.newContext();
+        const vm = await module.newContext();
         this.instances[instance_id] = { module, vm, resourceId: resource_id };
+        //console.log(this.instances)
         const manifest = await fetch(resource_id+"/manifest.json").then((res) => res.json());
         const jsCode = await fetch(resource_id+"/index.js").then((res) => res.text());
         const logHandle = vm.newFunction("log", (...args) => {
@@ -80,6 +81,7 @@ class WasmJSModality implements CK_Modality {
 
         const { receiver } = unit;
         const { instance_id } = receiver;
+        //console.log(this.instances)
         
         const instance = this.instances[instance_id];
         if (!instance) {

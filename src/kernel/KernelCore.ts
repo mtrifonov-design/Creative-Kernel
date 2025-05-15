@@ -53,6 +53,7 @@ export class KernelCore {
         if (!eligibleTid) {
             throw new Error("No eligible thread id found, Kernel is in a deadlock state!");
         }
+        //console.log(JSON.stringify(this.plate,null,2), eligibleTid);
 
         const unit = this.plate[eligibleTid].shift();
 
@@ -61,18 +62,14 @@ export class KernelCore {
         }
 
         let delta: CK_Workload = {};
-        switch (unit.type) {
-            case "worker":
-                delta = await this.modalities[unit.receiver.modality].computeUnit(unit);
-                break;
-            case "install":
-                await this.modalities[unit.instance.modality].installUnit(unit);
-                break;
-            case "terminate":
-                await this.modalities[unit.instance.modality].terminateUnit(unit);
-                break;
-            default:
-                throw new Error(`Unknown unit type: ${unit.type}`);
+        if (unit.type === "worker") {
+            delta = await this.modalities[unit.receiver.modality].computeUnit(unit);
+        } else if (unit.type === "install") {
+            await  this.modalities[unit.instance.modality].installUnit(unit);
+        } else if (unit.type === "terminate") {
+            await this.modalities[unit.instance.modality].terminateUnit(unit);
+        } else {
+            throw new Error(`Unknown unit type: ${unit.type}`);
         }
 
         for (const se of this.sideEffects) {

@@ -48,6 +48,13 @@ class IframeModality implements CK_Modality {
                                     resource_id: resource_id,
                                     instance_id: instance_id,
                                 }
+                                if (unit.payload.TO_SELF) {
+                                    unit.receiver = {
+                                        modality: "iframe",
+                                        resource_id: resource_id,
+                                        instance_id: instance_id,
+                                    }
+                                }
                             }
                         });
                     });
@@ -181,6 +188,10 @@ class IframeModality implements CK_Modality {
                         threadQueue.forEach((unit: CK_Unit) => {
                             if (unit.type === "worker") {
                                 unit.sender = receiver;
+                                if (unit.payload.TO_SELF) {
+                                    unit.receiver = receiver;
+                                }
+
                             }
                         });
                     })
@@ -194,6 +205,7 @@ class IframeModality implements CK_Modality {
             }, MAX_TIMEOUT);
             window.addEventListener('message', listener);
         });
+        //console.log(response);
 
         if (response !== false) {
             return response as { [threadId: string]: CK_Unit[] };

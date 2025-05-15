@@ -1,18 +1,27 @@
-import { CK_Workload } from '../types';
+import { CK_Instance, CK_Workload } from '../types';
 import {SideEffect} from '../SideEffect';
+import { AutoInstallSideEffect } from './AutoInstallSideEffect';
 
 type Subscriber = () => void;
 
 class ObservabilitySideEffect implements SideEffect {
+
+  private autoInstall: AutoInstallSideEffect;
+  constructor(autoInstall: AutoInstallSideEffect) {
+    this.autoInstall = autoInstall;
+  }
+
   private subs: Set<Subscriber> = new Set();
   snapshot: {
     plate: CK_Workload;
     pending: CK_Workload[];
     mode: EmissionMode;
+    instances: CK_Instance[];
   } = {
     plate: {},
     pending: [],
     mode: "SILENT",
+    instances: [],
   };
     
 
@@ -31,10 +40,11 @@ class ObservabilitySideEffect implements SideEffect {
 
 
   setMode(m: EmissionMode) {
-    console.log("Setting emission mode to:", m);
+
     this.snapshot = {
       ...this.snapshot,
       mode: m,
+      instances: Array.from(this.autoInstall.getInstalled()),
     }
     this.fire();
   }
@@ -62,10 +72,11 @@ class ObservabilitySideEffect implements SideEffect {
         plate: structuredClone(plate),
         pending: pending,
         mode: this.mode,
+        instances: Array.from(this.autoInstall.getInstalled()),
     }
   }
 
-  workloadWasPushed() {
+  pushWorkloadComplete() {
     if (this.mode === "WORKLOAD" || this.mode === "STEP") {
       this.fire();
     }

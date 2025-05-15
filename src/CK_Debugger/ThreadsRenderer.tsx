@@ -10,9 +10,12 @@ const ThreadsRenderer: React.FC<ThreadsRendererProps> = ({ threads, handleUnitHo
     return (
         <>
             {Object.entries(threads).map(([threadName, units]) => (
-                <div key={threadName} style={{ marginBottom: "10px" }}>
-                    <h3>{threadName}</h3>
-                    <div style={{ display: "flex", gap: "5px" }}>
+                <div key={threadName} style={{ marginBottom: "10px",
+                    width: "100%",
+                    padding: "10px",
+                 }}>
+                    <label>{threadName}</label>
+                    <div style={{ display: "flex", gap: "5px", width: "100%", border: "1px solid #ccc", padding: "5px" }}>
                         {units.map((unit, index) => (
                             <div
                                 key={index}
@@ -20,7 +23,7 @@ const ThreadsRenderer: React.FC<ThreadsRendererProps> = ({ threads, handleUnitHo
                                     width: "40px",
                                     height: "40px",
                                     borderRadius: "50%",
-                                    backgroundColor: "blue",
+                                    backgroundColor: unit.type === "worker" ? "lightblue" : unit.type === "install" ? "orange" : unit.type === "blocker" ? "black" : unit.type === "terminate" ? "red" : "gray",
                                     cursor: "pointer",
                                 }}
                                 onMouseEnter={() => handleUnitHover(unit)}
