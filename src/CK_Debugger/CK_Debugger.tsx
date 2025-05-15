@@ -1,4 +1,10 @@
-import { useState, useSyncExternalStore } from "react";
+import { useState } from "react";
+import { useSyncExternalStore } from "react";
+import ModeSelector from "./ModeSelector";
+import Tabs from "./Tabs";
+import ThreadsRenderer from "./ThreadsRenderer";
+import UnitDetails from "./UnitDetails";
+import { getSnapshot, subscribe } from "./utils";
 import { CK_Unit } from "../kernel/types";
 
 interface CreativeKernel {
@@ -21,17 +27,11 @@ declare global {
     }
 }
 
-const getSnapshot = () => {
-    return window.CREATIVE_KERNEL.getSnapshot();
-};
 
-const subscribe = (callback: () => void) => {
-    return window.CREATIVE_KERNEL.subscribe(callback);
-};
 
 function CK_Debugger() {
-    const { plate, pending } = useSyncExternalStore(subscribe, getSnapshot);
-    const [mode, setMode] = useState("STEP");
+    const { plate, pending, mode } = useSyncExternalStore(subscribe, getSnapshot);
+    const setMode = (nM: string) => globalThis.CREATIVE_KERNEL.setEmissionMode(nM);
     const [view, setView] = useState<string | number>("current"); // 'current' or index of pending workload
     const [selectedUnit, setSelectedUnit] = useState<CK_Unit | null>(null);
 
@@ -42,64 +42,12 @@ function CK_Debugger() {
             } else if (mode === "WORKLOAD") {
                 // Logic for finishing workload
                 window.CREATIVE_KERNEL.step();
-            }
+            } 
         }
     };
 
     const handleUnitHover = (unit: CK_Unit | null) => {
         setSelectedUnit(unit);
-    };
-
-    const renderThreads = (threads: { [key: string]: CK_Unit[] }) => {
-        return Object.entries(threads).map(([threadName, units]) => (
-            <div key={threadName} style={{ marginBottom: "10px" }}>
-                <h3>{threadName}</h3>
-                <div style={{ display: "flex", gap: "5px" }}>
-                    {units.map((unit, index) => (
-                        <div
-                            key={index}
-                            style={{
-                                width: "20px",
-                                height: "20px",
-                                borderRadius: "50%",
-                                backgroundColor: "blue",
-                                cursor: "pointer",
-                            }}
-                            onMouseEnter={() => handleUnitHover(unit)}
-                            onMouseLeave={() => handleUnitHover(null)}
-                        ></div>
-                    ))}
-                </div>
-            </div>
-        ));
-    };
-
-    const renderTabs = () => {
-        const tabs = pending.slice(0, 10).map((_, index) => (
-            <button
-                key={index}
-                onClick={() => setView(index)}
-                style={{
-                    padding: "5px 10px",
-                    margin: "0 5px",
-                    backgroundColor: view === index ? "#ddd" : "#fff",
-                    border: "1px solid #ccc",
-                    cursor: "pointer",
-                }}
-            >
-                Workload {index + 1}
-            </button>
-        ));
-
-        if (pending.length > 10) {
-            tabs.push(
-                <span key="hidden" style={{ marginLeft: "10px" }}>
-                    {pending.length - 10} workloads hidden
-                </span>
-            );
-        }
-
-        return tabs;
     };
 
     const firstUnit = plate && Object.values(plate)[0]?.[0];
@@ -109,79 +57,40 @@ function CK_Debugger() {
             <div style={{ flex: 1 }}>
                 <h1>CK Debugger</h1>
 
-                <div style={{ marginBottom: "10px", display: "flex", gap: "10px" }}>
-                    <button
-                        onClick={() => setMode("STEP")}
-                        style={{
-                            padding: "5px 10px",
-                            backgroundColor: mode === "STEP" ? "#ddd" : "#fff",
-                            border: "1px solid #ccc",
-                            cursor: "pointer",
-                        }}
-                    >
-                        STEP
-                    </button>
-                    <button
-                        onClick={() => setMode("WORKLOAD")}
-                        style={{
-                            padding: "5px 10px",
-                            backgroundColor: mode === "WORKLOAD" ? "#ddd" : "#fff",
-                            border: "1px solid #ccc",
-                            cursor: "pointer",
-                        }}
-                    >
-                        WORKLOAD
-                    </button>
-                </div>
+                <ModeSelector mode={mode} setMode={setMode} />
 
                 <button
                     onClick={handleStep}
-                    disabled={view !== "current"}
+                    disabled={view !== "current" || mode === "SILENT"}
                     style={{
                         padding: "10px 20px",
-                        backgroundColor: view === "current" ? "#007bff" : "#ccc",
+                        backgroundColor: view === "current" && mode !== "SILENT" ? "#007bff" : "#ccc",
                         color: "white",
                         border: "none",
-                        cursor: view === "current" ? "pointer" : "not-allowed",
+                        cursor: view === "current" && mode !== "SILENT" ? "pointer" : "not-allowed",
                     }}
                 >
-                    {mode === "STEP" ? "Step" : "Finish Workload"}
+                    {mode === "STEP" ? "Step" : mode === "WORKLOAD" ? "Finish Workload" : "Silent"}
                 </button>
 
                 <div style={{ marginTop: "20px" }}>
-                    <div style={{ display: "flex", gap: "10px" }}>{renderTabs()}</div>
+                    <Tabs pending={pending} view={view} setView={setView} />
 
                     {view === "current" ? (
                         <div>
                             <h2>Current Plate</h2>
-                            {renderThreads(plate)}
+                            <ThreadsRenderer threads={plate} handleUnitHover={handleUnitHover} />
                         </div>
                     ) : (
                         <div>
                             <h2>Pending Workload {typeof view === "number" ? view + 1 : ""}</h2>
-                            {renderThreads(pending[view as number])}
+                            <ThreadsRenderer threads={pending[view as number]} handleUnitHover={handleUnitHover} />
                         </div>
                     )}
                 </div>
             </div>
 
-            <div
-                style={{
-                    width: "300px",
-                    marginLeft: "20px",
-                    padding: "10px",
-                    border: "1px solid #ccc",
-                    borderRadius: "5px",
-                    backgroundColor: "#f9f9f9",
-                }}
-            >
-                <h2>Unit Details</h2>
-                {selectedUnit || firstUnit ? (
-                    <pre>{JSON.stringify(selectedUnit || firstUnit, null, 2)}</pre>
-                ) : (
-                    <p>No units available</p>
-                )}
-            </div>
+            <UnitDetails selectedUnit={selectedUnit} firstUnit={firstUnit} />
         </div>
     );
 }

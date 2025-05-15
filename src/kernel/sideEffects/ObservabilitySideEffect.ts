@@ -5,13 +5,14 @@ type Subscriber = () => void;
 
 class ObservabilitySideEffect implements SideEffect {
   private subs: Set<Subscriber> = new Set();
-  private mode: EmissionMode = "STEP";
-    snapshot: {
+  snapshot: {
     plate: CK_Workload;
     pending: CK_Workload[];
+    mode: EmissionMode;
   } = {
     plate: {},
     pending: [],
+    mode: "SILENT",
   };
     
 
@@ -24,10 +25,17 @@ class ObservabilitySideEffect implements SideEffect {
     return this.snapshot;
   }
 
+  get mode() {
+    return this.snapshot.mode;
+  }
 
 
   setMode(m: EmissionMode) {
-    this.mode = m;
+    this.snapshot = {
+      ...this.snapshot,
+      mode: m,
+    }
+    this.fire();
   }
 
   workloadComplete(): void {
@@ -52,8 +60,10 @@ class ObservabilitySideEffect implements SideEffect {
     this.snapshot = {
         plate: structuredClone(plate),
         pending: pending,
+        mode: this.mode,
     }
   }
+
   workloadWasPushed() {
     if (this.mode === "WORKLOAD" || this.mode === "STEP") {
       this.fire();
