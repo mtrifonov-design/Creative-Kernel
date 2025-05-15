@@ -12,7 +12,7 @@ import { Button, SimpleCommittedTextInput, StyleProvider } from '@mtrifonov-desi
 import Sidebar from './Sidebar';
 import AssetViewer from './Sidebar/ContextMenus/AssetViewer';
 
-const DEBUG = true;
+const DEBUG = false;
 
 
 const iframeModality = new IframeModality();
@@ -28,7 +28,7 @@ const kernel = new CreativeKernel({
         persistence: persistenceModality,
         privileged: privilegedModality,
     },);
-kernel.setEmissionMode("STEP");
+kernel.setEmissionMode("SILENT");
 privilegedModality.appendInstance('asset_viewer', (modality) => {
     return new AssetViewer(modality);
 })

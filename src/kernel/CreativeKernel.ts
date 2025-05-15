@@ -27,7 +27,6 @@ export default class CreativeKernel {
 
   /* ----- public façade that mimics the old API ----- */
   pushWorkload(w: CK_Workload) {
-    console.log("Pushing workload", w);
     this.core.pushWorkload(w);
   }
   step() {

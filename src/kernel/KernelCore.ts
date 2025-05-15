@@ -1,137 +1,150 @@
 import { SideEffect } from './SideEffect';
-import { CK_Modality,CK_Workload, CK_Unit, CK_BlockerUnit } from './types';
+import { CK_Modality, CK_Workload, CK_Unit, CK_BlockerUnit } from './types';
 
 export class KernelCore {
-  private plate: CK_Workload = {};
-  private pending: CK_Workload[] = [];
+    private plate: CK_Workload = {};
+    private pending: CK_Workload[] = [];
 
-  constructor(
-    private readonly modalities: { [m: string]: CK_Modality },
-    private readonly sideEffects: SideEffect[] = []
-  ) {
-
-
-  }
-
-  addSideEffect(se: SideEffect): void {
-    this.sideEffects.push(se);
-  }
-
-  pushWorkload(original: CK_Workload): void {
-    // 1. side‑effect rewrite
-    let workload = original;
-    for (const se of this.sideEffects) {
-      workload = se.processReceivedWorkload(workload);
+    constructor(
+        private readonly modalities: { [m: string]: CK_Modality },
+        private readonly sideEffects: SideEffect[] = []
+    ) {
     }
 
-    if (this.isEmpty(this.plate)) {
-        this.plate = workload;
-    } else {
-        this.pending.push(structuredClone(workload));
+    addSideEffect(se: SideEffect): void {
+        this.sideEffects.push(se);
     }
 
+    pushWorkload(original: CK_Workload): void {
+        // 1. side‑effect rewrite
+        let workload = original;
+        for (const se of this.sideEffects) {
+            workload = se.processReceivedWorkload(workload);
+        }
 
-    for (const se of this.sideEffects) se.updateGlobalState(this.plate, this.pending);
-    for (const se of this.sideEffects) se.workloadWasPushed();
-  }
+        if (this.isEmpty(this.plate)) {
+            this.plate = workload;
+        } else {
+            this.pending.push(structuredClone(workload));
+        }
 
-  /**
-   * Execute *one* kernel step. 
-   */
-  async step(): Promise<void> {
-    if (this.isEmpty(this.plate) && this.pending.length > 0) {
-      this.plate = this.pending.shift()!;
+
+        for (const se of this.sideEffects) se.updateGlobalState(this.plate, this.pending);
+        for (const se of this.sideEffects) se.workloadWasPushed();
     }
 
-    if (this.isEmpty(this.plate)) {
-      this.sideEffects.forEach((s) => s.updateGlobalState(this.plate, this.pending));
-      this.sideEffects.forEach((s) => s.workloadComplete());
-      return;
+    /**
+     * Execute *one* kernel step. 
+     */
+    async step(): Promise<void> {
+        if (this.isEmpty(this.plate) && this.pending.length > 0) {
+            this.plate = this.pending.shift()!;
+        }
+
+        this.resolveBlockedThreads();
+        this.resolveEmptyThreads();
+
+        if (this.isEmpty(this.plate)) {
+            this.sideEffects.forEach((s) => s.updateGlobalState(this.plate, this.pending));
+            this.sideEffects.forEach((s) => s.workloadComplete());
+            return;
+        }
+
+        const eligibleTid = this.chooseEligibleThreadId();
+        if (!eligibleTid) {
+            throw new Error("No eligible thread id found, Kernel is in a deadlock state!");
+        }
+
+        const unit = this.plate[eligibleTid].shift();
+
+        if (!unit) {
+            throw new Error('No unit found where we expected one');
+        }
+
+        let delta: CK_Workload = {};
+        switch (unit.type) {
+            case "worker":
+                delta = await this.modalities[unit.receiver.modality].computeUnit(unit);
+                break;
+            case "install":
+                await this.modalities[unit.instance.modality].installUnit(unit);
+                break;
+            case "terminate":
+                await this.modalities[unit.instance.modality].terminateUnit(unit);
+                break;
+            default:
+                throw new Error(`Unknown unit type: ${unit.type}`);
+        }
+
+        for (const se of this.sideEffects) {
+            delta = se.processReceivedDelta(delta);
+        }
+        this.applyDelta(delta);
+
+        this.resolveEmptyThreads();
+
+        this.sideEffects.forEach((s) => s.updateGlobalState(this.plate, this.pending));
+        this.sideEffects.forEach((s) => s.stepComplete(unit));
+
+        return;
     }
 
-    this.resolveBlockedThreads();
-
-    const eligibleTid = this.chooseEligibleThreadId();
-    if (!eligibleTid) {
-        throw new Error("No eligible thread id found, Kernel is in a deadlock state");
+    /* --------------------------- HELPERS --------------------------- */
+    private isEmpty(w: CK_Workload): boolean {
+        return Object.keys(w).length === 0;
     }
 
-    const unit = this.plate[eligibleTid].shift()!;
-    let delta: CK_Workload = {};
-    switch (unit.type) {
-      case "worker":
-        delta = await this.modalities[unit.receiver.modality].computeUnit(unit);
-        break;
-      case "install":
-        await this.modalities[unit.instance.modality].installUnit(unit);
-        break;
-      case "terminate":
-        await this.modalities[unit.instance.modality].terminateUnit(unit);
-        break;
-        default:
-            throw new Error(`Unknown unit type: ${unit.type}`);
+    private chooseEligibleThreadId(): string | undefined {
+        return Object.keys(this.plate).find(
+            (tid) => this.plate[tid][0]?.type !== "blocker"
+        );
     }
 
-    for (const se of this.sideEffects) {
-        delta = se.processReceivedDelta(delta);
-    }
-    this.applyDelta(delta);
+    private resolveBlockedThreads(): void {
+        // Detect mature blocker sets
+        const fronts = Object.values(this.plate).map((q) => q[0]).filter(Boolean) as CK_Unit[];
+        const blockerFronts = fronts.filter((u) => u.type === "blocker") as CK_BlockerUnit[];
 
-    if (this.plate[eligibleTid].length === 0) delete this.plate[eligibleTid];
+        const grouped: Record<string, CK_BlockerUnit[]> = {};
+        blockerFronts.forEach((b) => {
+            (grouped[b.blocker_id] ??= []).push(b);
+        });
 
-    this.sideEffects.forEach((s) => s.updateGlobalState(this.plate, this.pending));
-    this.sideEffects.forEach((s) => s.stepComplete(unit));
+        const matureIds = Object.keys(grouped).filter(
+            (bid) => grouped[bid].length === grouped[bid][0].blocker_count
+        );
 
-    return;
-  }
+        if (matureIds.length === 0) return;
 
-  /* --------------------------- HELPERS --------------------------- */
-  private isEmpty(w: CK_Workload): boolean {
-    return Object.keys(w).length === 0;
-  }
+        // Remove mature blockers
+        for (const tid of Object.keys(this.plate)) {
+            const q = this.plate[tid];
+            if (q[0]?.type === "blocker" && matureIds.includes(q[0].blocker_id)) {
+                q.shift();
+                if (q.length === 0) delete this.plate[tid];
+            }
+        }
 
-  private chooseEligibleThreadId(): string | undefined {
-    return Object.keys(this.plate).find(
-      (tid) => this.plate[tid][0]?.type !== "blocker"
-    );
-  }
-
-  private resolveBlockedThreads(): void {
-    // Detect mature blocker sets
-    const fronts = Object.values(this.plate).map((q) => q[0]).filter(Boolean) as CK_Unit[];
-    const blockerFronts = fronts.filter((u) => u.type === "blocker") as CK_BlockerUnit[];
-
-    const grouped: Record<string, CK_BlockerUnit[]> = {};
-    blockerFronts.forEach((b) => {
-      (grouped[b.blocker_id] ??= []).push(b);
-    });
-
-    const matureIds = Object.keys(grouped).filter(
-      (bid) => grouped[bid].length === grouped[bid][0].blocker_count
-    );
-
-    if (matureIds.length === 0) return;
-
-    // Remove mature blockers
-    for (const tid of Object.keys(this.plate)) {
-      const q = this.plate[tid];
-      if (q[0]?.type === "blocker" && matureIds.includes(q[0].blocker_id)) {
-        q.shift();
-        if (q.length === 0) delete this.plate[tid];
-      }
+        // recurse – there may be new blockers now at front
+        this.resolveBlockedThreads();
     }
 
-    // recurse – there may be new blockers now at front
-    this.resolveBlockedThreads();
-  }
-
-  private applyDelta(delta: CK_Workload) {
-    for (const tid of Object.keys(delta)) {
-      const src = delta[tid];
-      if (src.length === 0) continue;
-      
-      if (!this.plate[tid]) this.plate[tid] = [];
-      this.plate[tid].push(...structuredClone(src));
+    private resolveEmptyThreads(): void {
+        for (const tid of Object.keys(this.plate)) {
+            const q = this.plate[tid];
+            if (q.length === 0) {
+                delete this.plate[tid];
+            }
+        }
     }
-  }
+
+    private applyDelta(delta: CK_Workload) {
+        for (const tid of Object.keys(delta)) {
+            const src = delta[tid];
+            if (src.length === 0) continue;
+
+            if (!this.plate[tid]) this.plate[tid] = [];
+            this.plate[tid].push(...structuredClone(src));
+        }
+    }
 }
