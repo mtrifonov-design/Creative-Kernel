@@ -78,6 +78,8 @@ function ToolContextMenu(p: {}) {
         <Tool label={"HTML Preview"} icon={"html"} address={base+"htmlpreview"} />
         <Tool label={"Cyber Spaghetti Viewer"} icon={"dinner_dining"} address={base+"cyberspaghetti"} />
         <Tool label={"Cyber Spaghetti Controls"} icon={"dinner_dining"} address={base+"cyberspaghetti-controlconsole"} />
+        <Tool label={"Liquid Lissajous Viewer"} icon={"dinner_dining"} address={base+"liquidlissajous"} />
+        <Tool label={"Liquid Lissajous Controls"} icon={"dinner_dining"} address={base+"liquidlissajous-controlconsole"} />
         
     </div>
 }
