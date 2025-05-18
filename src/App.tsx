@@ -93,6 +93,14 @@ const App: React.FC = () => {
                     setReady(true);
                 });
             }
+            if (template === "liquidlissajous") {
+                globalThis.PERSISTENCE_MODALITY.loadSessionFromTemplate("liquidlissajous").then(() => {
+                    setReady(true);
+                }).catch((e) => {
+                    console.error("Error loading template", e);
+                    setReady(true);
+                });
+            }
         } else {
             setReady(true);
         }
