@@ -55,7 +55,7 @@ function main() {
     };
   })
 
-  setTimeout(() => {
+
     kernel.pushWorkload({
       default: [
         {
@@ -77,7 +77,7 @@ function main() {
         }
       ]
     })
-  }, 10);
+
 }
 
 export default main;
