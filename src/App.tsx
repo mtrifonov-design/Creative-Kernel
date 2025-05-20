@@ -141,7 +141,7 @@ const App: React.FC = () => {
                     <TreeComponent />
                 </div>
             </div>
-            {DEBUG && <CK_Debugger />}
+            {DEBUG && <CK_Debugger kernel={kernel} />}
         </div>
         <div style={{
             width: "100vw",

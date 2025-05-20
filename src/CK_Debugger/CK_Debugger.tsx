@@ -22,9 +22,9 @@ declare global {
     }
 }
 
-const kernel = window.CREATIVE_KERNEL;
 
-function CK_Debugger() {
+function CK_Debugger({kernel}: { kernel: CreativeKernel }) {
+    window.CREATIVE_KERNEL = kernel;
     const { plate, pending, mode, instances } = useSyncExternalStore(subscribe, getSnapshot);
     const setMode = (newMode: string) => {
         window.CREATIVE_KERNEL.setEmissionMode(newMode);
