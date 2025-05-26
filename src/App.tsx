@@ -11,8 +11,9 @@ import PrivilegedModality from './modalities/PrivilegedModality';
 import { Button, SimpleCommittedTextInput, StyleProvider } from '@mtrifonov-design/pinsandcurves-design';
 import Sidebar from './Sidebar';
 import AssetViewer from './Sidebar/ContextMenus/AssetViewer';
+import { debug } from './Config';
 
-const DEBUG = false;
+const DEBUG = debug;
 
 
 const iframeModality = new IframeModality();

@@ -21,7 +21,7 @@ function useIframeChannel(nodeId: string, address?: string) {
       // first (real) mount ➜ open
       //console.log("useIframeChannel", address, iframeId.current);
       if (!connected.current) {
-        iframeId.current = generateId();
+        iframeId.current = nodeId;
         UI_MODALITY.setIframe(nodeId, iframeId.current, address, frameRef.current);
         connected.current = true;
       }

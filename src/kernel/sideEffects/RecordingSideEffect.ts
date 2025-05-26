@@ -6,6 +6,7 @@ class RecordingSideEffect implements SideEffect {
 
     constructor(private kernel: CreativeKernel) {
         this.kernel = kernel;
+        globalThis.CREATIVE_KERNEL_RECORDING = this; // Expose the recording side effect globally
     }
 
     private isRecording: boolean = false;
@@ -46,7 +47,9 @@ class RecordingSideEffect implements SideEffect {
 
     isPlaying = false;
     currentIndex = 0;
-    pushToPending() {
+    recordingCallback: (() => void) | null = null;
+    pushToPending(callback?: () => void): void {
+        if (callback) this.recordingCallback = callback;
         console.log("Pushing recorded workloads to pending");
         console.log(this.recordedWorkloads);
 
@@ -71,6 +74,10 @@ class RecordingSideEffect implements SideEffect {
                 }, 50); 
             } else {
                 this.isPlaying = false;
+                if (this.recordingCallback) {
+                    this.recordingCallback();
+                    this.recordingCallback = null;
+                }
                 console.log("Finished playing recorded workloads");
             }
         }
