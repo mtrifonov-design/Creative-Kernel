@@ -1,5 +1,7 @@
-import CreativeKernel from "../kernel/KernelOBSOLETE";
-import { CK_InstallUnit, CK_Modality, CK_Unit, CK_WorkerUnit, CK_TerminateUnit } from "../kernel/types";
+import { KernelCore } from "../kernel/KernelCore";
+// import CreativeKernel from "../kernel/KernelOBSOLETE";
+import { CK_InstallUnit, CK_Modality, CK_Unit, CK_WorkerUnit, CK_TerminateUnit, CK_Workload } from "../kernel/types";
+
 
 const generatePw = () => {
     return Math.random().toString(36).substring(2, 15);
@@ -20,8 +22,8 @@ class IframeModality implements CK_Modality {
         }
     }
 
-    kernel: CreativeKernel | null = null;
-    connectToKernel(kernel: CreativeKernel) {
+    kernel: KernelCore | null = null;
+    connectToKernel(kernel: KernelCore) {
         this.kernel = kernel;
     }
 
@@ -36,6 +38,7 @@ class IframeModality implements CK_Modality {
                 const instance_id = this.pw_id[pw];
                 if (instance_id) {
                     const response = event.data.payload.workload;
+                    const metadata = event.data.payload.metadata || {};
                     const responseKeys = Object.keys(response);
                     responseKeys.forEach((key) => {
                         const threadQueue = response[key];
@@ -58,8 +61,9 @@ class IframeModality implements CK_Modality {
                             }
                         });
                     });
-                    this.pendingWorkloads.push(response);
-                    this.scheduleWorkloadRelease();
+                    this.kernel?.pushWorkload(response, metadata);
+                    // this.pendingWorkloads.push({workload:response, metadata: metadata});
+                    // this.scheduleWorkloadRelease();
                     // const kernel = this.kernel;
                     // if (kernel) {
                     //     kernel.pushWorkload(response);
@@ -69,7 +73,7 @@ class IframeModality implements CK_Modality {
         });
     }
 
-    pendingWorkloads: { [id: string]: CK_WorkerUnit[] }[] = [];
+    pendingWorkloads: { workload: CK_Workload, metadata?: { [key: string]: any } }[] = [];
     workloadReleaseScheduled: boolean = false;
     async scheduleWorkloadRelease() {
         if (this.workloadReleaseScheduled) {
@@ -81,7 +85,8 @@ class IframeModality implements CK_Modality {
             if (nextWorkload) {
                 const kernel = this.kernel;
                 if (kernel) {
-                    await kernel.pushWorkload(nextWorkload);
+                    const { workload, metadata } = nextWorkload;
+                    kernel.pushWorkload(workload, metadata);
                     this.pendingWorkloads.shift();
                 }
             }

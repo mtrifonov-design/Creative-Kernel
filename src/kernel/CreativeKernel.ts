@@ -48,9 +48,9 @@ export default class CreativeKernel {
     this.recording.loadFromJson(json);  
   }
 
-  pushWorkload(w: CK_Workload) {
+  pushWorkload(w: CK_Workload,m ?: { [key: string]: unknown }) {
     //console.log("Pushing workload:", w);
-    this.core.pushWorkload(w);
+    this.core.pushWorkload(w,m);
   }
   step() {
     return this.core.step();

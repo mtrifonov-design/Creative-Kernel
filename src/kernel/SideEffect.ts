@@ -6,7 +6,7 @@ export interface SideEffect {
   processReceivedDelta?(delta: CK_Workload): CK_Workload;
   updateGlobalState?(plate: CK_Workload, pending: CK_Workload[]): void;
   workloadComplete?(): void;
-  workloadWasPushed?(workload: CK_Workload): void;
+  workloadWasPushed?(workload: CK_Workload, metadata? :{ [key:string]:unknown}): void;
   pushWorkloadComplete?(workload: CK_Workload): void;
   stepComplete?(processedUnit : CK_Unit): void;
   instanceInstalled?(unit: CK_Instance, metadata: unknown): void;

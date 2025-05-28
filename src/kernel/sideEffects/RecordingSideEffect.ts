@@ -84,8 +84,9 @@ class RecordingSideEffect implements SideEffect {
         
     }
 
-    workloadWasPushed(workload: CK_Workload): void {
+    workloadWasPushed(workload: CK_Workload, metadata? : {[key:string]:unknown}): void {
         if (this.isRecording) {
+            if (metadata && metadata["recording"] === false) {return;} // Skip recording if metadata indicates not to record
             this.recordedWorkloads.push(JSON.parse(JSON.stringify(workload)));
         }
     }

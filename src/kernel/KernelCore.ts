@@ -15,10 +15,10 @@ export class KernelCore {
         this.sideEffects.push(se);
     }
 
-    pushWorkload(original: CK_Workload): void {
+    pushWorkload(original: CK_Workload, metadata? : { [key:string]: unknown}): void {
         // 1. side‑effect rewrite
         let workload = original;
-        for (const se of this.sideEffects) if (se.workloadWasPushed) se.workloadWasPushed(workload);
+        for (const se of this.sideEffects) if (se.workloadWasPushed) se.workloadWasPushed(workload,metadata);
         for (const se of this.sideEffects) {
             workload = se.processReceivedWorkload ? se.processReceivedWorkload(workload) : workload;
         }
