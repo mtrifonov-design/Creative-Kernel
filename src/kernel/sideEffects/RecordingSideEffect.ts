@@ -10,10 +10,12 @@ class RecordingSideEffect implements SideEffect {
     }
 
     private isRecording: boolean = false;
-    private recordedWorkloads: CK_Workload[] = [];
+    private recordedWorkloads: {workload:CK_Workload,timestamp: number}[] = [];
+    private recordingStartTime: number = Date.now();
 
     startRecording() {
         this.isRecording = true;
+        this.recordingStartTime = Date.now();
         this.recordedWorkloads = [];
     }
 
@@ -54,13 +56,21 @@ class RecordingSideEffect implements SideEffect {
         console.log(this.recordedWorkloads);
 
         this.isPlaying = true;
-        this.currentIndex = 0;
-        if (this.recordedWorkloads[0] !== undefined) {
-            this.kernel.pushWorkload(this.recordedWorkloads[0]);
-        } else {
-            this.isPlaying = false;
-            console.error("No recorded workloads to push");
-            return;
+        // this.currentIndex = 0;
+        // if (this.recordedWorkloads[0] !== undefined) {
+        //     this.kernel.pushWorkload(this.recordedWorkloads[0]);
+        // } else {
+        //     this.isPlaying = false;
+        //     console.error("No recorded workloads to push");
+        //     return;
+        // }
+
+        for (let i = 0; i < this.recordedWorkloads.length; i++) {
+            const {workload,timestamp} = this.recordedWorkloads[i];
+            setTimeout(() => {
+                this.kernel.pushWorkload(workload);
+                this.workloadComplete();
+            }, timestamp);
         }
     }
 
@@ -68,10 +78,10 @@ class RecordingSideEffect implements SideEffect {
         if (this.isPlaying) {
             this.currentIndex++;
             if (this.currentIndex < this.recordedWorkloads.length) {
-                const workload = this.recordedWorkloads[this.currentIndex];
-                setTimeout(() => {
-                    this.kernel.pushWorkload(workload);
-                }, 50); 
+                // const workload = this.recordedWorkloads[this.currentIndex];
+                // setTimeout(() => {
+                //     this.kernel.pushWorkload(workload);
+                // }, 50); 
             } else {
                 this.isPlaying = false;
                 if (this.recordingCallback) {
@@ -87,7 +97,10 @@ class RecordingSideEffect implements SideEffect {
     workloadWasPushed(workload: CK_Workload, metadata? : {[key:string]:unknown}): void {
         if (this.isRecording) {
             if (metadata && metadata["recording"] === false) {return;} // Skip recording if metadata indicates not to record
-            this.recordedWorkloads.push(JSON.parse(JSON.stringify(workload)));
+            this.recordedWorkloads.push(JSON.parse(JSON.stringify({
+                workload,
+                timestamp: Date.now() - this.recordingStartTime,
+            })));
         }
     }
 

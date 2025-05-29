@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { TreeComponent } from './PanelLib/VertexComponents';
 import './App.css';
 import CK_Debugger from './CK_Debugger/CK_Debugger';
@@ -12,6 +12,24 @@ import { Button, SimpleCommittedTextInput, StyleProvider } from '@mtrifonov-desi
 import Sidebar from './Sidebar';
 import AssetViewer from './Sidebar/ContextMenus/AssetViewer';
 import { debug } from './Config';
+import FallbackScreen from './FallbackScreen/FallbackScreen';
+
+function useIsMobile(): boolean {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+      return /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase());
+    };
+
+    setIsMobile(checkMobile());
+  }, []);
+
+  return isMobile;
+}
+
+
 
 const DEBUG = debug;
 
@@ -47,7 +65,16 @@ const App: React.FC = () => {
 
     const [ready, setReady] = React.useState(false);
     const [dragging, setDragging] = React.useState(false);
-
+    const [fallback, setFallback] = React.useState({
+        useFallback: false,
+        h1Text: "Creative Kernel is not ready",
+        pText: "Please wait while the kernel is loading.",
+        buttonText: "Reload",
+        onButtonClick: () => {
+            window.location.reload();
+        }
+    });
+    const isMobile = useIsMobile();
 
     const guard = useRef(false);
     useEffect(() => {
@@ -63,43 +90,58 @@ const App: React.FC = () => {
         if (params.template) {
             const template = params.template;
             if (template === "default") {
-                globalThis.PERSISTENCE_MODALITY.loadSessionFromTemplate("default").then(() => {
-                    setReady(true);
-                }).catch((e) => {
-                    console.error("Error loading template", e);
-                    setReady(true);
-                });
-            }
-            if (template === "forsasha") {
-                globalThis.PERSISTENCE_MODALITY.loadSessionFromTemplate("forsasha").then(() => {
-                    setReady(true);
-                }).catch((e) => {
-                    console.error("Error loading template", e);
-                    setReady(true);
-                });
+                setFallback({
+                    useFallback: true,
+                    h1Text: "This tool is undergoing maintenance",
+                    pText: "The 'p5js' template is currently unavailable. Please try again later.",
+                    buttonText: "Visit Homepage",
+                    onButtonClick: () => {
+                        window.location.href = "https://pinsandcurves.app";
+                    }
+                })
             }
             if (template === "cyberspaghetti") {
-                globalThis.PERSISTENCE_MODALITY.loadSessionFromTemplate("cyberspaghetti").then(() => {
-                    setReady(true);
-                }).catch((e) => {
-                    console.error("Error loading template", e);
-                    setReady(true);
-                });
+                setFallback({
+                    useFallback: true,
+                    h1Text: "This tool is undergoing maintenance",
+                    pText: "The 'cyberspaghetti' template is currently unavailable. Please try again later.",
+                    buttonText: "Visit Homepage",
+                    onButtonClick: () => {
+                        window.location.href = "https://pinsandcurves.app";
+                    }
+                })
+                // globalThis.PERSISTENCE_MODALITY.loadSessionFromTemplate("cyberspaghetti").then(() => {
+                //     setReady(true);
+                // }).catch((e) => {
+                //     console.error("Error loading template", e);
+                //     setReady(true);
+                // });
             }
             if (template === "laserlinguine") {
-                globalThis.PERSISTENCE_MODALITY.loadSessionFromTemplate("laserlinguine").then(() => {
-                    setReady(true);
-                }).catch((e) => {
-                    console.error("Error loading template", e);
-                    setReady(true);
-                });
+                setFallback({
+                    useFallback: true,
+                    h1Text: "This tool has been discontinued",
+                    pText: "The 'laserlinguine' tool is no longer available.",
+                    buttonText: "Visit Homepage",
+                    onButtonClick: () => {
+                        window.location.href = "https://pinsandcurves.app";
+                    }
+                })
             }
             if (template === "liquidlissajous") {
                 globalThis.PERSISTENCE_MODALITY.loadSessionFromTemplate("liquidlissajous").then(() => {
                     setReady(true);
                 }).catch((e) => {
                     console.error("Error loading template", e);
-                    setReady(true);
+                setFallback({
+                    useFallback: true,
+                    h1Text: "An error occurred while loading Liquid Lissajous",
+                    pText: e.message || "Please try again later.",
+                    buttonText: "Reload",
+                    onButtonClick: () => {
+                        window.location.reload();
+                    }
+                })
                 });
             }
         } else {
@@ -108,6 +150,31 @@ const App: React.FC = () => {
 
 
     }, [])
+
+    if (isMobile) {
+        return <StyleProvider>
+            <FallbackScreen
+                h1Text="Pins And Curves is not available on mobile devices"
+                pText="Please visit this site on a desktop or laptop computer to use Pins And Curves."
+                buttonText="Visit Homepage"
+                onButtonClick={() => {
+                    window.location.href = "https://pinsandcurves.app";
+                }}
+            />
+        </StyleProvider>
+    }
+
+    if (fallback.useFallback) {
+        return <StyleProvider>
+            <FallbackScreen
+                h1Text={fallback.h1Text}
+                pText={fallback.pText}
+                buttonText={fallback.buttonText}
+                onButtonClick={fallback.onButtonClick}
+            />
+            </StyleProvider>
+    }
+
     return <DraggingAssetContext.Provider value={[dragging, setDragging]}>
     <StyleProvider>
         <div style={{
