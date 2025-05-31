@@ -1,24 +1,44 @@
 import { SideEffect } from './SideEffect';
 import { CK_Modality, CK_Workload, CK_Unit, CK_BlockerUnit } from './types';
+import { registerCommunicationChannel, LocalAddress, deeffectSync, Message } from '../messaging/index';
 
 export class KernelCore {
     private plate: CK_Workload = {};
     private pending: CK_Workload[] = [];
 
+    private __messaging_system_handle_message: (stringified_message: string) => void = () => { };
+
     constructor(
         private readonly modalities: { [m: string]: CK_Modality },
         private readonly sideEffects: SideEffect[] = []
     ) {
+        registerCommunicationChannel(
+            new LocalAddress("core"),
+            ((handle_message: (stringified_message: string) => void) => {
+                this.__messaging_system_handle_message = handle_message;
+            }).bind(this),
+            this.__messaging_system_recieveMessage.bind(this)
+        )
+    }
+
+    __messaging_system_recieveMessage(stringified_message: string) {
+        const { type, payload } = deeffectSync(
+            Message.content(stringified_message)
+        );
+
+        if (type === "pushWorkload") {
+            this.pushWorkload(payload.response, payload.metadata);
+        }
     }
 
     addSideEffect(se: SideEffect): void {
         this.sideEffects.push(se);
     }
 
-    pushWorkload(original: CK_Workload, metadata? : { [key:string]: unknown}): void {
+    pushWorkload(original: CK_Workload, metadata?: { [key: string]: unknown }): void {
         // 1. side‑effect rewrite
         let workload = original;
-        for (const se of this.sideEffects) if (se.workloadWasPushed) se.workloadWasPushed(workload,metadata);
+        for (const se of this.sideEffects) if (se.workloadWasPushed) se.workloadWasPushed(workload, metadata);
         for (const se of this.sideEffects) {
             workload = se.processReceivedWorkload ? se.processReceivedWorkload(workload) : workload;
         }
@@ -44,8 +64,8 @@ export class KernelCore {
         this.resolveEmptyThreads();
 
         if (this.isEmpty(this.plate)) {
-            this.sideEffects.forEach((s) => {if (s.updateGlobalState) s.updateGlobalState(this.plate, this.pending)});
-            this.sideEffects.forEach((s) => {if (s.workloadComplete) s.workloadComplete()});
+            this.sideEffects.forEach((s) => { if (s.updateGlobalState) s.updateGlobalState(this.plate, this.pending) });
+            this.sideEffects.forEach((s) => { if (s.workloadComplete) s.workloadComplete() });
             return;
         }
 
@@ -65,7 +85,7 @@ export class KernelCore {
         if (unit.type === "worker") {
             delta = await this.modalities[unit.receiver.modality].computeUnit(unit);
         } else if (unit.type === "install") {
-            const metadata = await  this.modalities[unit.instance.modality].installUnit(unit);
+            const metadata = await this.modalities[unit.instance.modality].installUnit(unit);
             if (metadata) {
                 this.sideEffects.forEach((s) => {
                     if (s.instanceInstalled) {
@@ -91,8 +111,8 @@ export class KernelCore {
 
         this.resolveEmptyThreads();
 
-        this.sideEffects.forEach((s) => {if (s.updateGlobalState) s.updateGlobalState(this.plate, this.pending)});
-        this.sideEffects.forEach((s) => {if (s.stepComplete) s.stepComplete(unit)});
+        this.sideEffects.forEach((s) => { if (s.updateGlobalState) s.updateGlobalState(this.plate, this.pending) });
+        this.sideEffects.forEach((s) => { if (s.stepComplete) s.stepComplete(unit) });
 
         return;
     }

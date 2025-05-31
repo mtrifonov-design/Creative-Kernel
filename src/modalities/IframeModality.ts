@@ -2,6 +2,7 @@ import { KernelCore } from "../kernel/KernelCore";
 // import CreativeKernel from "../kernel/KernelOBSOLETE";
 import { CK_InstallUnit, CK_Modality, CK_Unit, CK_WorkerUnit, CK_TerminateUnit, CK_Workload } from "../kernel/types";
 
+import { serializeMsg, sendMessage, Message, Address, LocalAddress, registerCommunicationChannel, deeffectSync } from "../messaging/index";
 
 const generatePw = () => {
     return Math.random().toString(36).substring(2, 15);
@@ -10,10 +11,37 @@ const generatePw = () => {
 const MAX_TIMEOUT = 5000;
 class IframeModality implements CK_Modality {
     sendMessage(id: string, message: any) {
+        const msg = new Message(
+            new LocalAddress("iframe_modality"),
+            JSON.stringify({
+                id,
+                message
+            })
+        )
 
+        sendMessage(msg);
+    }
+
+    pushWorkload(response: CK_Workload, metadata: { [key: string]: unknown }) {
+        const msg = new Message(
+            new LocalAddress("core"),
+            JSON.stringify({
+                type: "pushWorkload",
+                payload: { response, metadata }
+            })
+        )
+
+        this.__messaging_system_handle_message(
+            serializeMsg(msg)
+        );
+
+        // this.kernel?.pushWorkload(response, metadata)
+    }
+
+    __messaging_system_sendMessage(stringified_message: string) {
+        const { id, message } = deeffectSync(Message.content(stringified_message));
         const iframe = this.instances[id];
-        //post message
-        ////console.log("sendMessage", id, message, iframe);
+
         if (iframe) {
             iframe.contentWindow?.postMessage({
                 type: 'ck-message',
@@ -21,6 +49,8 @@ class IframeModality implements CK_Modality {
             }, '*');
         }
     }
+
+    __messaging_system_handle_message: (stringified_message: string) => void = () => { };
 
     kernel: KernelCore | null = null;
     connectToKernel(kernel: KernelCore) {
@@ -61,7 +91,8 @@ class IframeModality implements CK_Modality {
                             }
                         });
                     });
-                    this.kernel?.pushWorkload(response, metadata);
+
+                    this.pushWorkload(response, metadata);
                     // this.pendingWorkloads.push({workload:response, metadata: metadata});
                     // this.scheduleWorkloadRelease();
                     // const kernel = this.kernel;
@@ -71,6 +102,15 @@ class IframeModality implements CK_Modality {
                 }
             }
         });
+
+        registerCommunicationChannel(
+            new LocalAddress("iframe_modality"),
+            ((handle_message: (stringified_message: string) => void) => {
+                this.__messaging_system_handle_message = handle_message;
+            }).bind(this),
+            this.__messaging_system_sendMessage.bind(this)
+        )
+
     }
 
     pendingWorkloads: { workload: CK_Workload, metadata?: { [key: string]: any } }[] = [];
@@ -86,7 +126,7 @@ class IframeModality implements CK_Modality {
                 const kernel = this.kernel;
                 if (kernel) {
                     const { workload, metadata } = nextWorkload;
-                    kernel.pushWorkload(workload, metadata);
+                    this.pushWorkload(workload, metadata || {});
                     this.pendingWorkloads.shift();
                 }
             }
