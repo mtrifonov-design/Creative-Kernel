@@ -2,7 +2,7 @@ import React, { useDeferredValue, useEffect } from "react";
 import { SimpleCommittedTextInput, Button, Icon } from "@mtrifonov-design/pinsandcurves-design";
 import { CorePluginBase } from "../../Config";
 import { useDraggingAssetContext } from "../../App";
-
+import { production } from "../../Config";
 
 function Tool(p: {
     label: string;
@@ -79,7 +79,8 @@ function ToolContextMenu(p: {}) {
         <Tool label={"Cyber Spaghetti Viewer"} icon={"dinner_dining"} address={base+"cyberspaghetti"} />
         <Tool label={"Cyber Spaghetti Controls"} icon={"dinner_dining"} address={base+"cyberspaghetti-controlconsole"} />
          */}
-        
+        {!production && <Tool label={"Asset Test"} icon="home" address={base+"asset-test-panel"} />}
+
         <Tool label={"Liquid Lissajous Viewer"} icon={"dinner_dining"} address={base+"liquidlissajous"} />
         <Tool label={"Liquid Lissajous Controls"} icon={"dinner_dining"} address={base+"liquidlissajous-controlconsole"} />
         
