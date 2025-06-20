@@ -101,21 +101,20 @@ const App: React.FC = () => {
                 })
             }
             if (template === "cyberspaghetti") {
+                globalThis.PERSISTENCE_MODALITY.loadSessionFromTemplate("cyberspaghetti").then(() => {
+                    setReady(true);
+                }).catch((e) => {
+                    console.error("Error loading template", e);
                 setFallback({
                     useFallback: true,
-                    h1Text: "This tool is undergoing maintenance",
-                    pText: "The 'cyberspaghetti' template is currently unavailable. Please try again later.",
-                    buttonText: "Visit Homepage",
+                    h1Text: "An error occurred while loading Cyber Spaghetti",
+                    pText: e.message || "Please try again later.",
+                    buttonText: "Reload",
                     onButtonClick: () => {
-                        window.location.href = "https://pinsandcurves.app";
+                        window.location.reload();
                     }
                 })
-                // globalThis.PERSISTENCE_MODALITY.loadSessionFromTemplate("cyberspaghetti").then(() => {
-                //     setReady(true);
-                // }).catch((e) => {
-                //     console.error("Error loading template", e);
-                //     setReady(true);
-                // });
+                });
             }
             if (template === "laserlinguine") {
                 setFallback({
