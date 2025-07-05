@@ -71,11 +71,12 @@ function ToolContextMenu(p: {}) {
         color: "var(--gray6)",
     }}>
 
-
         {/* <Tool label={"Timeline"} icon={"animation"} address={base+"editing"} />
         <Tool label={"Signals"} icon={"animation"} address={base+"signals"} />
         <Tool label={"Code Editor"} icon={"code"} address={base+"code"} />
-        <Tool label={"HTML Preview"} icon={"html"} address={base+"htmlpreview"} />
+        <Tool label={"HTML Preview"} icon={"html"} address={base+"htmlpreview"} /> */}
+        {/* 
+
         <Tool label={"Cyber Spaghetti Viewer"} icon={"dinner_dining"} address={base+"cyberspaghetti"} />
         <Tool label={"Cyber Spaghetti Controls"} icon={"dinner_dining"} address={base+"cyberspaghetti-controlconsole"} />
          */}

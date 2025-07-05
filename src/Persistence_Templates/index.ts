@@ -2,7 +2,7 @@ import bb from './BouncingBall.json';
 import s from './ForSasha.json'
 import cs from './cyber_spag_test2.json'
 import ll from './LaserLinguine.json'
-import liquidl from './liquidlissajousv2.json'
+import liquidl from './newlissajoustemplate.json'
 
 const TEMPLATES = {
     "default": JSON.stringify(bb),
