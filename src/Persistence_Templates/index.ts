@@ -1,6 +1,6 @@
 import bb from './BouncingBall.json';
 import s from './ForSasha.json'
-import cs from './cyber_spag_test2.json'
+import cs from './cybspagh_renewedtemplate.json'
 import ll from './LaserLinguine.json'
 import liquidl from './newlissajoustemplate.json'
 
