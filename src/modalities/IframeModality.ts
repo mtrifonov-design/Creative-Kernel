@@ -7,7 +7,7 @@ const generatePw = () => {
     return Math.random().toString(36).substring(2, 15);
 }
 
-const MAX_TIMEOUT = 5000;
+const MAX_TIMEOUT = 15000;
 class IframeModality implements CK_Modality {
     sendMessage(id: string, message: any) {
 
