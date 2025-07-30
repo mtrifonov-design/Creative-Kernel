@@ -85,7 +85,9 @@ function ToolContextMenu(p: {}) {
         <Tool label={"Cyber Spaghetti Controls"} icon={"dinner_dining"} address={base+"cyberspaghetti-controlconsole"} />
         <Tool label={"Liquid Lissajous Viewer"} icon={"dinner_dining"} address={base+"liquidlissajous"} />
         <Tool label={"Liquid Lissajous Controls"} icon={"dinner_dining"} address={base+"liquidlissajous-controlconsole"} />
-        
+        <Tool label={"Star Shaped Domain Wipe Viewer"} icon={"dinner_dining"} address={base+"starshapeddomainwipe"} />
+        <Tool label={"Star Shaped Domain Wipe Controls"} icon={"dinner_dining"} address={base+"starshapeddomainwipe-controlconsole"} />
+
     </div>
 }
 
