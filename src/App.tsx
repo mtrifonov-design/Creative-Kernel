@@ -143,6 +143,22 @@ const App: React.FC = () => {
                 })
                 });
             }
+            if (template === "echoknight") {
+                globalThis.PERSISTENCE_MODALITY.loadSessionFromTemplate("echoknight").then(() => {
+                    setReady(true);
+                }).catch((e) => {
+                    console.error("Error loading template", e);
+                setFallback({
+                    useFallback: true,
+                    h1Text: "An error occurred while loading Liquid Lissajous",
+                    pText: e.message || "Please try again later.",
+                    buttonText: "Reload",
+                    onButtonClick: () => {
+                        window.location.reload();
+                    }
+                })
+                });
+            }
         } else {
             setReady(true);
         }
