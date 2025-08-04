@@ -82,7 +82,6 @@ const App: React.FC = () => {
     useEffect(() => {
         const startTime = Date.now();
         const beforeUnloadHandler = (e: BeforeUnloadEvent) => {
-            //console.log(Date.now() - startTime);
             if (Date.now() - startTime < 60 * 1000) {
                 return;
             }
