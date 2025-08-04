@@ -40,6 +40,7 @@ const uiModality = new UIModality();
 const persistenceModality = new PersistenceModality();
 const privilegedModality = new PrivilegedModality();
 
+
 const kernel = new CreativeKernel({
         iframe: iframeModality,
         wasmjs: wasmJSModality,
@@ -61,6 +62,8 @@ globalThis.PERSISTENCE_MODALITY = persistenceModality;
 
 const DraggingAssetContext = React.createContext<[boolean, (b: boolean) => void] | null>(null);
 
+
+
 const App: React.FC = () => {
 
     const [ready, setReady] = React.useState(false);
@@ -75,6 +78,24 @@ const App: React.FC = () => {
         }
     });
     const isMobile = useIsMobile();
+
+    useEffect(() => {
+        const startTime = Date.now();
+        const beforeUnloadHandler = (e: BeforeUnloadEvent) => {
+            //console.log(Date.now() - startTime);
+            if (Date.now() - startTime < 60 * 1000) {
+                return;
+            }
+            e.preventDefault();
+            e.returnValue = 'UNSAVED CHANGES';
+        };
+
+
+        window.addEventListener('beforeunload', beforeUnloadHandler);
+        return () => {
+            window.removeEventListener('beforeunload', beforeUnloadHandler);
+        };
+    }, []);
 
     const guard = useRef(false);
     useEffect(() => {
