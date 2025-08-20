@@ -13,6 +13,7 @@ import Sidebar from './Sidebar';
 import AssetViewer from './Sidebar/ContextMenus/AssetViewer';
 import { debug } from './Config';
 import FallbackScreen from './FallbackScreen/FallbackScreen';
+import { CookieBanner, getCookieId } from './Cookies';
 
 function useIsMobile(): boolean {
   const [isMobile, setIsMobile] = useState(false);
@@ -95,6 +96,18 @@ const App: React.FC = () => {
             window.removeEventListener('beforeunload', beforeUnloadHandler);
         };
     }, []);
+
+    useEffect(() => {
+        if (window.op) {
+            const id = getCookieId();
+            if (id !== null) {
+                window.op('identify', {
+                    profileId: id,
+                });
+            }
+            window.op('track', 'app_loaded');
+        }
+    },[])
 
     const guard = useRef(false);
     useEffect(() => {
@@ -260,6 +273,7 @@ const App: React.FC = () => {
                 }
             }}
         ></div>
+        <CookieBanner />
     </ StyleProvider>
     </DraggingAssetContext.Provider>
 }
