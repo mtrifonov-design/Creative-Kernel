@@ -23,10 +23,10 @@ function CookieBanner() {
             version: 1,
         }));
         if (window.op) {
-            window.op('track', 'cookie_consent_accepted');
             window.op('identify', {
                 profileId: id,
             })
+            window.op('track', 'cookie_consent_accepted');
         }
         setChoiceMade(true);
     }
