@@ -102,7 +102,7 @@ class PersistenceModality implements CK_Modality {
         // clear url parameters
         const url = new URL(window.location.href);
         url.searchParams.delete("template");
-        window.history.replaceState({}, document.title, url.toString());
+        //window.history.replaceState({}, document.title, url.toString());
     }
 
     async loadSessionFromTemplate(template: string) {
