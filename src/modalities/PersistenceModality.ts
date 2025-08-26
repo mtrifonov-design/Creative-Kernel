@@ -130,30 +130,41 @@ class PersistenceModality implements CK_Modality {
                 const reader = new FileReader();
                 reader.onload = async (event) => {
                     const text = event.target?.result as string;
-                    const session = JSON.parse(text);
-                    const registry = this.kernel?.getRegistry();
-                    if (!registry) {
-                        return;
-                    }
-                    const persistentInstances = registry.filter(
-                        (instance) => instance.metadata ? instance.metadata.persistent : false
-                    )
-                    await this.kernel?.terminateAllInstances();
-                    await this.kernel?.pushWorkload({
-                        persistence: session
-                    });
-                    this.session = [];
-                    this.keys = [];
+                    // save to local storage
+                    localStorage.setItem("load_session_data", text);
                     resolve();
+
+                    // const session = JSON.parse(text);
+                    // const registry = this.kernel?.getRegistry();
+                    // if (!registry) {
+                    //     return;
+                    // }
+                    // const persistentInstances = registry.filter(
+                    //     (instance) => instance.metadata ? instance.metadata.persistent : false
+                    // )
+                    // await this.kernel?.terminateAllInstances();
+                    // await this.kernel?.pushWorkload({
+                    //     persistence: session
+                    // });
+                    // this.session = [];
+                    // this.keys = [];
+                    // resolve();
                 }
                 reader.readAsText(file);
             }
             input.click();
         });
-        let fileName = input.files?.[0]?.name;
-        // remove .json
-        fileName = fileName?.replace(".json", "");
-        return fileName;
+
+        // removve everything after ? in the url
+        const url = new URL(window.location.href);
+        url.search = "";
+        window.history.replaceState({}, document.title, url.toString());
+        window.location.reload();
+
+        // let fileName = input.files?.[0]?.name;
+        // // remove .json
+        // fileName = fileName?.replace(".json", "");
+        // return fileName;
     }
 }
 

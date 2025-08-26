@@ -80,9 +80,25 @@ const App: React.FC = () => {
     });
     const isMobile = useIsMobile();
 
+
+    useEffect(() => {
+        // check if local storage has load_session_data
+        const sessionData = localStorage.getItem("load_session_data");
+        localStorage.removeItem("load_session_data");
+        if (sessionData) {
+            const session = JSON.parse(sessionData);
+            kernel.pushWorkload({
+                persistence: session
+            });
+        }
+    },[])
+
     useEffect(() => {
         const startTime = Date.now();
         const beforeUnloadHandler = (e: BeforeUnloadEvent) => {
+            if (localStorage.getItem("load_session_data")) {
+                return;
+            }
             if (Date.now() - startTime < 60 * 1000) {
                 return;
             }
