@@ -10,6 +10,7 @@ class PersistenceModality implements CK_Modality {
     kernel: CreativeKernel | null = null;
     connectToKernel(kernel: CreativeKernel) {
         this.kernel = kernel;
+        this.kernel.registerInstalledInstance({ modality: "persistence", resource_id: "persistence", instance_id: "persistence" }, {});
     }
 
     constructor() {

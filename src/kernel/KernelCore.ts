@@ -32,6 +32,14 @@ export class KernelCore {
         for (const se of this.sideEffects) if (se.pushWorkloadComplete) se.pushWorkloadComplete(workload);
     }
 
+    registerInstalledInstance(instance: { modality: string, resource_id: string, instance_id: string }, metadata?: { [key: string]: any }) {
+        for (const se of this.sideEffects) {
+            if (se.instanceInstalled) {
+                se.instanceInstalled(instance, metadata);
+            }
+        }
+    }
+
     /**
      * Execute *one* kernel step. 
      */

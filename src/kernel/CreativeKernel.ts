@@ -47,6 +47,9 @@ export default class CreativeKernel {
   loadRecordingFromJson(json: string) {
     this.recording.loadFromJson(json);  
   }
+  registerInstalledInstance(instance: { modality: string, resource_id: string, instance_id: string }, metadata?: { [key: string]: any }) {
+    this.core.registerInstalledInstance(instance, metadata);
+  }
 
   pushWorkload(w: CK_Workload,m ?: { [key: string]: unknown }) {
     //console.log("Pushing workload:", w);

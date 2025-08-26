@@ -6,7 +6,7 @@ const Instances: React.FC<{instances:CK_Instance[]}> = ({instances}) => {
     return (
         <div
             style={{
-                width: "300px",
+                width: "700px",
                 height: "100%",
                 overflow: 'scroll',
                 marginLeft: "20px",

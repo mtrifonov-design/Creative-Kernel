@@ -13,6 +13,7 @@ class UIModality implements CK_Modality {
     kernel: CreativeKernel | null = null;
     connectToKernel(kernel: CreativeKernel) {
         this.kernel = kernel;
+        this.kernel.registerInstalledInstance({ modality: "ui", resource_id: "ui", instance_id: "ui" }, {persistent: true});
     }
 
     treeManager: TreeManager;

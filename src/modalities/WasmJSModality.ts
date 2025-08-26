@@ -93,6 +93,15 @@ class WasmJSModality implements CK_Modality {
         const { receiver } = unit;
         const { instance_id } = receiver;
         //console.log(this.instances)
+        if (!this.instances[instance_id]) {
+            const u = {
+                type: "install",
+                instance: receiver,
+                id: crypto.randomUUID(),
+            }
+            const meta = await this.installUnit(u as CK_InstallUnit);
+            this.kernel?.registerInstalledInstance({ modality: "wasmjs", resource_id: u.instance.resource_id, instance_id: u.instance.instance_id }, meta);
+        }
         
         const instance = this.instances[instance_id];
         if (!instance) {

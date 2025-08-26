@@ -23,11 +23,11 @@ export class AutoInstallSideEffect implements SideEffect {
           const receiverKey = this.idOf(u.receiver);
           if (!Object.keys(this.installed).includes(receiverKey) && !this.queued.has(receiverKey)) {
             this.queued.add(receiverKey);
-            out.push({
-              type: "install",
-              instance: u.receiver,
-              id: crypto.randomUUID(),
-            } as CK_InstallUnit);
+          //   out.push({
+          //     type: "install",
+          //     instance: u.receiver,
+          //     id: crypto.randomUUID(),
+          //   } as CK_InstallUnit);
           }
         }
         out.push(u);
@@ -47,11 +47,11 @@ export class AutoInstallSideEffect implements SideEffect {
           const receiverKey = this.idOf(u.receiver);
           if (!Object.keys(this.installed).includes(receiverKey) && !this.queued.has(receiverKey)) {
             this.queued.add(receiverKey);
-            out.push({
-              type: "install",
-              instance: u.receiver,
-              id: crypto.randomUUID(),
-            } as CK_InstallUnit);
+          //   out.push({
+          //     type: "install",
+          //     instance: u.receiver,
+          //     id: crypto.randomUUID(),
+          //   } as CK_InstallUnit);
           }
         }
         out.push(u);

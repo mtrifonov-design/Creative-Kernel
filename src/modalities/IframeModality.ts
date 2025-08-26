@@ -99,6 +99,7 @@ class IframeModality implements CK_Modality {
     pw_id: { [pw: string]: string } = {};
     id_pw: { [id: string]: string } = {};
     id_resource: { [id: string]: string } = {};
+    id_installed: { [id: string]: boolean } = {};
     instances: { [id: string]: HTMLIFrameElement } = {};
 
     async terminateUnit(unit: CK_TerminateUnit): Promise<boolean> {
@@ -111,13 +112,14 @@ class IframeModality implements CK_Modality {
             delete this.pw_id[this.id_pw[instance_id]];
             delete this.id_pw[instance_id];
             delete this.id_resource[instance_id];
+            delete this.id_installed[instance_id];
         }
         return true;
     }
 
 
     async installUnit(unit: CK_InstallUnit): Promise<false | { [key: string]: any }> {
-        ////console.log("installUnit", unit);
+        console.log("installUnit", unit);
         const { instance } = unit;
         const { instance_id, resource_id } = instance;
         const pw = generatePw();
@@ -131,6 +133,7 @@ class IframeModality implements CK_Modality {
 
         this.instances[instance_id] = iframe;
         iframe.onload = (e) => {
+            this.id_installed[instance_id] = true;
             this.sendMessage(instance_id, { CK_INSTALL: true, pw: pw, instanceId: instance_id, resourceId: resource_id });
         }
         if (!iframe.isConnected) {
@@ -176,6 +179,19 @@ class IframeModality implements CK_Modality {
 
         const { receiver } = unit;
         const { instance_id } = receiver;
+
+        console.log("Computing unit in iframe modality", instance_id, receiver, unit);
+        if (!this.id_installed[instance_id]) {
+            console.log("Instance not found, installing...", instance_id, receiver);
+            const u = {
+                type: "install",
+                instance: receiver,
+                id: crypto.randomUUID(),
+            }
+            const meta = await this.installUnit(u as CK_InstallUnit);
+            this.kernel?.registerInstalledInstance({ modality: "iframe", resource_id: u.instance.resource_id, instance_id: u.instance.instance_id }, meta);
+            console.log("Meta,", meta)
+        }
 
         this.sendMessage(instance_id, { CK_COMPUTE: true, unit: unit });
         // await a return message from the iframe

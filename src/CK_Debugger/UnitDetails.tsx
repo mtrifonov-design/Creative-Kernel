@@ -10,7 +10,7 @@ const UnitDetails: React.FC<UnitDetailsProps> = ({ selectedUnit, firstUnit }) =>
     return (
         <div
             style={{
-                width: "300px",
+                width: "700px",
                 height: "100%",
                 overflow: 'scroll',
                 marginLeft: "20px",
