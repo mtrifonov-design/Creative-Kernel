@@ -112,7 +112,7 @@ const App: React.FC = () => {
             if (localStorage.getItem("load_session_data_used")) {
                 return;
             }
-            if (Date.now() - startTime < 5 * 1000) {
+            if (Date.now() - startTime < 60 * 1000) {
                 return;
             }
             e.preventDefault();
