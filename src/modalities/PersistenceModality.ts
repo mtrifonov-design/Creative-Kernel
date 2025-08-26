@@ -1,6 +1,8 @@
+import { openDB } from "idb/build/entry.js";
 import CreativeKernel from "../kernel/KernelOBSOLETE";
 import { CK_InstallUnit, CK_Modality, CK_TerminateUnit, CK_Unit, CK_WorkerUnit } from "../kernel/types";
 import { TEMPLATES } from "../Persistence_Templates";
+import { get, set } from 'idb-keyval';
 
 function generateId() {
     return Math.random().toString(36).substring(2, 15);
@@ -131,7 +133,8 @@ class PersistenceModality implements CK_Modality {
                 reader.onload = async (event) => {
                     const text = event.target?.result as string;
                     // save to local storage
-                    localStorage.setItem("load_session_data", text);
+                    localStorage.setItem("load_session_data_used", "TRUE");
+                    await set("load_session_data", text);
                     resolve();
 
                     // const session = JSON.parse(text);

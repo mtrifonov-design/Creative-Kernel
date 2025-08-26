@@ -10,10 +10,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@mtrifonov-design/pinsandcurves-design": "^0.0.8",
+    "idb": "^8.0.3",
+    "idb-keyval": "^6.2.2",
     "immer": "^10.1.1",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "@mtrifonov-design/pinsandcurves-design": "^0.0.8"
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",

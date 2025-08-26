@@ -98,7 +98,7 @@ function CookieBanner() {
                 gap: '10px',
                 justifyContent: 'flex-end',
             }}>
-                <a href="https://pinsandcurves.app/#/privacy-policy">Privacy Policy</a>
+                <a href="https://pinsandcurves.app/privacy">Privacy Policy</a>
                 <Button text="Decline" onClick={declineCookies} />
                 <Button text="Accept" onClick={acceptCookies} />
             </div>

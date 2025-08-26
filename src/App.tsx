@@ -14,20 +14,22 @@ import AssetViewer from './Sidebar/ContextMenus/AssetViewer';
 import { debug } from './Config';
 import FallbackScreen from './FallbackScreen/FallbackScreen';
 import { CookieBanner, getCookieId } from './Cookies';
+import { get, set, clear } from 'idb-keyval';
+
 
 function useIsMobile(): boolean {
-  const [isMobile, setIsMobile] = useState(false);
+    const [isMobile, setIsMobile] = useState(false);
 
-  useEffect(() => {
-    const checkMobile = () => {
-      const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
-      return /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase());
-    };
+    useEffect(() => {
+        const checkMobile = () => {
+            const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+            return /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase());
+        };
 
-    setIsMobile(checkMobile());
-  }, []);
+        setIsMobile(checkMobile());
+    }, []);
 
-  return isMobile;
+    return isMobile;
 }
 
 
@@ -43,12 +45,12 @@ const privilegedModality = new PrivilegedModality();
 
 
 const kernel = new CreativeKernel({
-        iframe: iframeModality,
-        wasmjs: wasmJSModality,
-        ui: uiModality,
-        persistence: persistenceModality,
-        privileged: privilegedModality,
-    },);
+    iframe: iframeModality,
+    wasmjs: wasmJSModality,
+    ui: uiModality,
+    persistence: persistenceModality,
+    privileged: privilegedModality,
+},);
 kernel.setEmissionMode("SILENT");
 privilegedModality.appendInstance('asset_viewer', (modality) => {
     return new AssetViewer(modality);
@@ -83,23 +85,34 @@ const App: React.FC = () => {
 
     useEffect(() => {
         // check if local storage has load_session_data
-        const sessionData = localStorage.getItem("load_session_data");
-        localStorage.removeItem("load_session_data");
-        if (sessionData) {
-            const session = JSON.parse(sessionData);
-            kernel.pushWorkload({
-                persistence: session
-            });
+        const f = async () => {
+            try {
+                const sessionData = await get("load_session_data");
+                if (localStorage.getItem("load_session_data_used")) {
+                    localStorage.removeItem("load_session_data_used");
+                }
+                await clear();
+                if (sessionData) {
+                    const session = JSON.parse(sessionData);
+                    kernel.pushWorkload({
+                        persistence: session
+                    });
+                }
+            } catch(e) {
+                console.error("Error loading session data", e);
+            }
         }
-    },[])
+        f();
+
+    }, [])
 
     useEffect(() => {
         const startTime = Date.now();
         const beforeUnloadHandler = (e: BeforeUnloadEvent) => {
-            if (localStorage.getItem("load_session_data")) {
+            if (localStorage.getItem("load_session_data_used")) {
                 return;
             }
-            if (Date.now() - startTime < 60 * 1000) {
+            if (Date.now() - startTime < 5 * 1000) {
                 return;
             }
             e.preventDefault();
@@ -123,7 +136,7 @@ const App: React.FC = () => {
             }
             window.op('track', 'app_loaded');
         }
-    },[])
+    }, [])
 
     const guard = useRef(false);
     useEffect(() => {
@@ -154,15 +167,15 @@ const App: React.FC = () => {
                     setReady(true);
                 }).catch((e) => {
                     console.error("Error loading template", e);
-                setFallback({
-                    useFallback: true,
-                    h1Text: "An error occurred while loading Cyber Spaghetti",
-                    pText: e.message || "Please try again later.",
-                    buttonText: "Reload",
-                    onButtonClick: () => {
-                        window.location.reload();
-                    }
-                })
+                    setFallback({
+                        useFallback: true,
+                        h1Text: "An error occurred while loading Cyber Spaghetti",
+                        pText: e.message || "Please try again later.",
+                        buttonText: "Reload",
+                        onButtonClick: () => {
+                            window.location.reload();
+                        }
+                    })
                 });
             }
             if (template === "laserlinguine") {
@@ -181,15 +194,15 @@ const App: React.FC = () => {
                     setReady(true);
                 }).catch((e) => {
                     console.error("Error loading template", e);
-                setFallback({
-                    useFallback: true,
-                    h1Text: "An error occurred while loading Liquid Lissajous",
-                    pText: e.message || "Please try again later.",
-                    buttonText: "Reload",
-                    onButtonClick: () => {
-                        window.location.reload();
-                    }
-                })
+                    setFallback({
+                        useFallback: true,
+                        h1Text: "An error occurred while loading Liquid Lissajous",
+                        pText: e.message || "Please try again later.",
+                        buttonText: "Reload",
+                        onButtonClick: () => {
+                            window.location.reload();
+                        }
+                    })
                 });
             }
             if (template === "echoknight") {
@@ -197,15 +210,15 @@ const App: React.FC = () => {
                     setReady(true);
                 }).catch((e) => {
                     console.error("Error loading template", e);
-                setFallback({
-                    useFallback: true,
-                    h1Text: "An error occurred while loading Liquid Lissajous",
-                    pText: e.message || "Please try again later.",
-                    buttonText: "Reload",
-                    onButtonClick: () => {
-                        window.location.reload();
-                    }
-                })
+                    setFallback({
+                        useFallback: true,
+                        h1Text: "An error occurred while loading Liquid Lissajous",
+                        pText: e.message || "Please try again later.",
+                        buttonText: "Reload",
+                        onButtonClick: () => {
+                            window.location.reload();
+                        }
+                    })
                 });
             }
         } else {
@@ -236,65 +249,65 @@ const App: React.FC = () => {
                 buttonText={fallback.buttonText}
                 onButtonClick={fallback.onButtonClick}
             />
-            </StyleProvider>
+        </StyleProvider>
     }
 
     return <DraggingAssetContext.Provider value={[dragging, setDragging]}>
-    <StyleProvider>
-        <div style={{
-            height: "100vh",
-            width: "100vw",
-            padding: "5px",
-            display: "grid",
-            gridTemplateRows: DEBUG ? "1fr 500px" : "1fr",
-        }}
-        >
+        <StyleProvider>
             <div style={{
-                height: "100%",
-                width: "100%",
+                height: "100vh",
+                width: "100vw",
+                padding: "5px",
                 display: "grid",
-                gridTemplateColumns: "auto 1fr",
-                gridTemplateRows: "1fr",
-                gridTemplateAreas: `"sidebar main"`,
-                
-            }}>
-                <div style={{gridArea: "sidebar", width: "100%", height: "100%"}}
-                >
-                    <Sidebar />
-                </div>
+                gridTemplateRows: DEBUG ? "1fr 500px" : "1fr",
+            }}
+            >
                 <div style={{
-                    gridArea: "main",
                     height: "100%",
                     width: "100%",
                     display: "grid",
-                    boxSizing: "border-box",
+                    gridTemplateColumns: "auto 1fr",
                     gridTemplateRows: "1fr",
+                    gridTemplateAreas: `"sidebar main"`,
+
                 }}>
-                    <TreeComponent />
+                    <div style={{ gridArea: "sidebar", width: "100%", height: "100%" }}
+                    >
+                        <Sidebar />
+                    </div>
+                    <div style={{
+                        gridArea: "main",
+                        height: "100%",
+                        width: "100%",
+                        display: "grid",
+                        boxSizing: "border-box",
+                        gridTemplateRows: "1fr",
+                    }}>
+                        <TreeComponent />
+                    </div>
                 </div>
+                {DEBUG && <CK_Debugger kernel={kernel} />}
             </div>
-            {DEBUG && <CK_Debugger kernel={kernel} />}
-        </div>
-        <div style={{
-            width: "100vw",
-            height: "100vh",
-            position: "absolute",
-            top: 0,
-            left: 0,
-            zIndex: ready ? -1000 : 1000,
-        }}
-            onPointerDown={(e) => {
-                if (!ready) {
-                    e.stopPropagation();   // optional: keep the event from bubbling
-                }
+            <div style={{
+                width: "100vw",
+                height: "100vh",
+                position: "absolute",
+                top: 0,
+                left: 0,
+                zIndex: ready ? -1000 : 1000,
             }}
-        ></div>
-        <CookieBanner />
-    </ StyleProvider>
+                onPointerDown={(e) => {
+                    if (!ready) {
+                        e.stopPropagation();   // optional: keep the event from bubbling
+                    }
+                }}
+            ></div>
+            <CookieBanner />
+        </ StyleProvider>
     </DraggingAssetContext.Provider>
 }
 
-function useDraggingAssetContext() {    
+function useDraggingAssetContext() {
     const context = React.useContext(DraggingAssetContext);
     if (!context) {
         throw new Error("useDraggingAssetContext must be used within a DraggingAssetProvider");
