@@ -1,5 +1,6 @@
-import { Bridge, PluginEnvironment, PluginIdentWithInstanceId } from "pc-messaging-kernel/pluginSystem/plugin";
-import { Result } from "pc-messaging-kernel/utils";
+import { Bridge, PluginEnvironment } from "pc-messaging-kernel/pluginSystem/plugin";
+import type { PluginIdentWithInstanceId } from "pc-messaging-kernel/pluginSystem/plugin";
+import type { Result } from "pc-messaging-kernel/utils";
 
 const current_plugins: PluginIdentWithInstanceId[] = [];
 export default async function (env: PluginEnvironment) {
@@ -71,6 +72,7 @@ async function handShake(env: PluginEnvironment) {
 const create_div = () => {
     const div = document.createElement('div');
     div.id = 'main';
+    console.log("im running");
     div.innerHTML = `
         <div style="
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);

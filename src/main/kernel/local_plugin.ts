@@ -3,6 +3,7 @@ import { Address } from "pc-messaging-kernel/messaging";
 import { KernelEnvironment } from "pc-messaging-kernel/pluginSystem/kernel";
 import { PluginEnvironment } from "pc-messaging-kernel/pluginSystem/plugin";
 import type { PluginIdent, PluginIdentWithInstanceId } from "pc-messaging-kernel/pluginSystem/plugin";
+
 import { callbackAsEffect, ResultToEffect } from "pc-messaging-kernel/utils";
 
 export const createLocalPlugin = Effect.fn("createLocalPlugin")(
@@ -26,7 +27,7 @@ export const createLocalPlugin = Effect.fn("createLocalPlugin")(
 export const isLocalPlugin = (plugin_ident: PluginIdent) => Effect.async<boolean>((resume) => {
     const name = plugin_ident.name.toLowerCase();
     // /src/demos/website/core/..
-    const potential_path = `/local_plugins/${name}/index.ts`;
+    const potential_path = `/src/local_plugins/${name}/index.ts`;
 
     fetch(potential_path).then(
         r => {

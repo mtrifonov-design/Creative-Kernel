@@ -10,9 +10,8 @@ declare global {
     var logInverstigator: LogInvestigator;
 }
 
-console.log("THIS SHOWS UP.")
 Effect.gen(function* () {
-    console.log("TESTING 123")
+
     const kernel_address = new LocalAddress("KERNEL");
     const kernel_env = yield* createLocalEnvironment(kernel_address);
     const kernel = new KernelImpl(kernel_env);
@@ -20,6 +19,4 @@ Effect.gen(function* () {
 }).pipe(
     Effect.catchAll(e => Effect.succeed(console.log(e))),
     runEffectAsPromise
-).then(() => {
-    console.log("TESTING 456")
-});
+)
