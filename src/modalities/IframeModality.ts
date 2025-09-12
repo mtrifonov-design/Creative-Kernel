@@ -215,6 +215,7 @@ class IframeModality implements CK_Modality {
         if (response !== false) {
             return response as { [threadId: string]: CK_Unit[] };
         }
+        console.error("IframeModality: computeUnit timeout", unit);
         throw new Error("Error computing unit");
     }
 
